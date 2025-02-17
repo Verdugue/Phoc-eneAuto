@@ -40,7 +40,8 @@ CREATE TABLE vehicles (
     vin_number VARCHAR(17) UNIQUE,
     status VARCHAR(20) CHECK (status IN ('available', 'sold', 'reserved')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    supplier_id INTEGER REFERENCES suppliers(id)
 );
 
 -- Table des transactions
@@ -85,6 +86,21 @@ CREATE TABLE customer_documents (
     file_name VARCHAR(255) NOT NULL,
     file_path VARCHAR(255) NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des fournisseurs
+CREATE TABLE suppliers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    contact_name VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(20),
+    address TEXT,
+    postal_code VARCHAR(10),
+    city VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT true
 );
 
 -- Insertion des données initiales
@@ -242,3 +258,18 @@ SET transaction_date = CASE
     WHEN invoice_number = 'INV-2024-026' THEN '2023-12-20 09:30:00'
     END
 WHERE invoice_number LIKE 'INV-2024-%';
+
+-- Insérer quelques fournisseurs de test
+INSERT INTO suppliers (name, contact_name, email, phone, address, postal_code, city) VALUES
+('Auto Premium Import', 'Pierre Dubois', 'contact@autopremium.fr', '0491234567', '123 Avenue des Importateurs', '13008', 'Marseille'),
+('Luxury Cars Europe', 'Marie Lambert', 'info@luxurycars.eu', '0478901234', '45 Rue du Commerce', '69002', 'Lyon'),
+('Electric Vehicle Direct', 'Jean Martin', 'sales@evdirect.fr', '0155667788', '78 Boulevard Voltaire', '75011', 'Paris'),
+('Sport Auto Distribution', 'Sophie Moreau', 'contact@sportauto.fr', '0607080910', '12 Rue des Sports', '13006', 'Marseille'),
+('Eco Motors France', 'Lucas Bernard', 'info@ecomotors.fr', '0456789012', '34 Avenue Écologique', '33000', 'Bordeaux');
+
+-- Mettre à jour les véhicules avec leurs fournisseurs
+UPDATE vehicles SET supplier_id = 1 WHERE brand IN ('Mercedes-Benz', 'BMW');
+UPDATE vehicles SET supplier_id = 2 WHERE brand IN ('Porsche', 'Range Rover');
+UPDATE vehicles SET supplier_id = 3 WHERE brand IN ('Tesla');
+UPDATE vehicles SET supplier_id = 4 WHERE brand IN ('Alpine', 'Nissan');
+UPDATE vehicles SET supplier_id = 5 WHERE brand IN ('Toyota', 'Lexus');

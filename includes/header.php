@@ -48,6 +48,9 @@ if (!isset($_SESSION['user_id'])) {
                             <i class="fa fa-dashboard"></i> Tableau de bord
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/suppliers.php">Fournisseurs</a>
+                    </li>
                 </ul>
                 <div class="navbar-nav">
                     <li class="nav-item dropdown">
