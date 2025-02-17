@@ -28,12 +28,16 @@ try {
     $total_items = $pdo->query("SELECT COUNT(*) FROM transactions")->fetchColumn();
     $total_pages = ceil($total_items / $items_per_page);
 
-    // Requête avec tri
+    // Requête avec tri et concaténation des noms
     $stmt = $pdo->prepare("
         SELECT 
             t.*,
-            v.brand, v.model,
-            c.first_name, c.last_name,
+            v.brand, 
+            v.model,
+            CONCAT(v.brand, ' ', v.model) as vehicle_info,
+            c.first_name, 
+            c.last_name,
+            CONCAT(c.first_name, ' ', c.last_name) as client_name,
             u.username as vendeur
         FROM transactions t
         JOIN vehicles v ON t.vehicle_id = v.id
@@ -71,41 +75,43 @@ function getSortLink($field, $current_sort_field, $current_sort_order) {
 
 <div class="card">
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered align-middle">
+        <div class="table-container">
+            <table class="table">
                 <thead>
                     <tr>
-                        <th><a href="<?php echo getSortLink('transaction_date', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Date</a></th>
-                        <th><a href="<?php echo getSortLink('invoice_number', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">N° Facture</a></th>
-                        <th class="text-light">Client</th>
-                        <th class="text-light">Véhicule</th>
-                        <th><a href="<?php echo getSortLink('transaction_type', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Type</a></th>
-                        <th><a href="<?php echo getSortLink('price', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Montant</a></th>
-                        <th class="text-light">Vendeur</th>
-                        <th class="text-light">Actions</th>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Véhicule</th>
+                        <th>Type</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($transactions as $transaction): ?>
-                        <tr>
+                        <tr onclick="window.location='/transactions/view.php?id=<?php echo $transaction['id']; ?>'" 
+                            style="cursor: pointer;">
                             <td><?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></td>
-                            <td><?php echo htmlspecialchars($transaction['invoice_number']); ?></td>
-                            <td><?php echo htmlspecialchars($transaction['first_name'] . ' ' . $transaction['last_name']); ?></td>
-                            <td><?php echo htmlspecialchars($transaction['brand'] . ' ' . $transaction['model']); ?></td>
+                            <td><?php echo htmlspecialchars($transaction['client_name']); ?></td>
+                            <td><?php echo htmlspecialchars($transaction['vehicle_info']); ?></td>
                             <td>
                                 <span class="badge bg-<?php echo $transaction['transaction_type'] === 'sale' ? 'success' : 'info'; ?>">
                                     <?php echo $transaction['transaction_type'] === 'sale' ? 'Vente' : 'Achat'; ?>
                                 </span>
                             </td>
-                            <td><?php echo number_format($transaction['price'], 2, ',', ' '); ?> €</td>
-                            <td><?php echo htmlspecialchars($transaction['vendeur']); ?></td>
+                            <td><?php echo number_format($transaction['price'], 2, ',', ' ') . ' €'; ?></td>
                             <td>
-                                <div class="btn-group">
-                                    <a href="view.php?id=<?php echo $transaction['id']; ?>" 
-                                       class="btn btn-sm btn-info">
-                                        <i class="fa fa-eye"></i>
-                                    </a>
-                                </div>
+                                <span class="badge bg-<?php 
+                                    echo isset($transaction['status']) && $transaction['status'] === 'completed' ? 'success' : 
+                                        (isset($transaction['status']) && $transaction['status'] === 'cancelled' ? 'danger' : 'warning'); 
+                                ?>">
+                                    <?php 
+                                    echo isset($transaction['status']) ? 
+                                        ($transaction['status'] === 'completed' ? 'Terminée' : 
+                                         ($transaction['status'] === 'cancelled' ? 'Annulée' : 'En cours')) 
+                                        : 'En cours'; 
+                                    ?>
+                                </span>
                             </td>
                         </tr>
                     <?php endforeach; ?>

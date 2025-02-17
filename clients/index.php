@@ -38,36 +38,29 @@ try {
 
 <div class="card">
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped">
+        <div class="table-container">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Nom</th>
                         <th>Email</th>
                         <th>Téléphone</th>
                         <th>Ville</th>
-                        <th>Actions</th>
+                        <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($clients as $client): ?>
-                        <tr>
+                        <tr onclick="window.location='/clients/view.php?id=<?php echo $client['id']; ?>'" 
+                            style="cursor: pointer;">
                             <td><?php echo htmlspecialchars($client['last_name'] . ' ' . $client['first_name']); ?></td>
                             <td><?php echo htmlspecialchars($client['email']); ?></td>
                             <td><?php echo htmlspecialchars($client['phone']); ?></td>
                             <td><?php echo htmlspecialchars($client['city']); ?></td>
                             <td>
-                                <div class="btn-group">
-                                    <a href="/clients/edit.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-primary">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
-                                    <a href="/clients/view.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-info">
-                                        <i class="fa fa-eye"></i>
-                                    </a>
-                                    <button onclick="deleteClient(<?php echo $client['id']; ?>)" class="btn btn-sm btn-danger">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
+                                <span class="badge bg-<?php echo $client['is_active'] ? 'success' : 'danger'; ?>">
+                                    <?php echo $client['is_active'] ? 'Actif' : 'Inactif'; ?>
+                                </span>
                             </td>
                         </tr>
                     <?php endforeach; ?>

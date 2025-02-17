@@ -71,24 +71,23 @@ try {
 
 <div class="card">
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered align-middle">
+        <div class="table-container">
+            <table class="table">
                 <thead>
                     <tr>
                         <th>Photo</th>
-                        <th><a href="<?php echo getSortLink('brand', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Marque</a></th>
-                        <th><a href="<?php echo getSortLink('model', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Modèle</a></th>
-                        <th><a href="<?php echo getSortLink('year', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Année</a></th>
-                        <th><a href="<?php echo getSortLink('price', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Prix</a></th>
-                        <th><a href="<?php echo getSortLink('mileage', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Kilométrage</a></th>
-                        <th class="text-light">Statut</th>
-                        <th class="text-light">Actions</th>
-                        <th class="text-light"></th>
+                        <th>Marque</th>
+                        <th>Modèle</th>
+                        <th>Année</th>
+                        <th>Prix</th>
+                        <th>Kilométrage</th>
+                        <th>Statut</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($vehicles as $vehicle): ?>
-                        <tr>
+                        <tr onclick="window.location='/vehicles/view.php?id=<?php echo $vehicle['id']; ?>'" 
+                            style="cursor: pointer;">
                             <td style="width: 100px;">
                                 <?php if ($vehicle['image_path']): ?>
                                     <img src="<?php echo htmlspecialchars($vehicle['image_path']); ?>" 
@@ -106,43 +105,17 @@ try {
                             <td><?php echo htmlspecialchars($vehicle['model']); ?></td>
                             <td><?php echo htmlspecialchars($vehicle['year']); ?></td>
                             <td><?php echo number_format($vehicle['price'], 2, ',', ' ') . ' €'; ?></td>
-                            <td><?php echo htmlspecialchars($vehicle['mileage']); ?> km</td>
+                            <td><?php echo number_format($vehicle['mileage'], 0, ',', ' '); ?> km</td>
                             <td>
-                                <span class="badge bg-<?php echo $vehicle['vehicle_condition'] === 'new' ? 'success' : 'info'; ?>">
-                                    <?php echo $vehicle['vehicle_condition'] === 'new' ? 'Neuf' : 'Occasion'; ?>
+                                <span class="badge bg-<?php 
+                                    echo $vehicle['status'] === 'available' ? 'success' : 
+                                        ($vehicle['status'] === 'reserved' ? 'warning' : 'danger'); 
+                                ?>">
+                                    <?php 
+                                    echo $vehicle['status'] === 'available' ? 'Disponible' : 
+                                        ($vehicle['status'] === 'reserved' ? 'Réservé' : 'Vendu'); 
+                                    ?>
                                 </span>
-                            </td>
-                            <td>
-                                <?php
-                                $statusClasses = [
-                                    'available' => 'success',
-                                    'reserved' => 'warning',
-                                    'sold' => 'danger'
-                                ];
-                                $statusLabels = [
-                                    'available' => 'Disponible',
-                                    'reserved' => 'Réservé',
-                                    'sold' => 'Vendu'
-                                ];
-                                ?>
-                                <span class="badge bg-<?php echo $statusClasses[$vehicle['status']]; ?>">
-                                    <?php echo $statusLabels[$vehicle['status']]; ?>
-                                </span>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="/vehicles/edit.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-sm btn-primary">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
-                                    <a href="/vehicles/view.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-sm btn-info">
-                                        <i class="fa fa-eye"></i>
-                                    </a>
-                                    <button onclick="deleteVehicle(<?php echo $vehicle['id']; ?>)" 
-                                            class="btn btn-sm btn-danger" 
-                                            <?php echo $vehicle['status'] !== 'available' ? 'disabled' : ''; ?>>
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

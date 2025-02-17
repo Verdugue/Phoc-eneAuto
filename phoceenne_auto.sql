@@ -166,6 +166,8 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   `payment_method` varchar(20) DEFAULT NULL,
   `invoice_number` varchar(50) DEFAULT NULL,
   `notes` text,
+  `status` VARCHAR(20) DEFAULT 'completed' 
+  CHECK (status IN ('pending', 'completed', 'cancelled')),
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`),
   UNIQUE KEY `invoice_number` (`invoice_number`)
@@ -175,38 +177,38 @@ CREATE TABLE IF NOT EXISTS `transactions` (
 -- Déchargement des données de la table `transactions`
 --
 
-INSERT INTO `transactions` (`id`, `customer_id`, `vehicle_id`, `user_id`, `transaction_type`, `transaction_date`, `price`, `payment_method`, `invoice_number`, `notes`) VALUES
-(1, 1, 3, 1, 'sale', '2023-07-05 08:30:00', 89900.00, 'card', 'INV-2024-002', 'Vente BMW M4'),
-(2, 2, 5, 2, 'sale', '2023-07-12 12:15:00', 189900.00, 'transfer', 'INV-2024-003', 'Vente Porsche Taycan'),
-(3, 1, 7, 1, 'sale', '2023-07-20 09:45:00', 24900.00, 'card', 'INV-2024-004', 'Vente Clio RS'),
-(4, 2, 9, 2, 'sale', '2023-07-28 14:20:00', 149900.00, 'transfer', 'INV-2024-005', 'Vente Range Rover'),
-(5, 1, 1, 1, 'sale', '2023-08-03 07:30:00', 158900.00, 'transfer', 'INV-2024-006', 'Vente Mercedes AMG GT'),
-(6, 2, 4, 2, 'sale', '2023-08-10 13:45:00', 129900.00, 'card', 'INV-2024-007', 'Vente Tesla Model S'),
-(7, 1, 6, 1, 'sale', '2023-08-18 11:20:00', 38900.00, 'card', 'INV-2024-008', 'Vente Golf GTI'),
-(8, 2, 11, 2, 'sale', '2023-08-25 08:15:00', 42900.00, 'cash', 'INV-2024-009', 'Vente Toyota RAV4'),
-(9, 1, 2, 1, 'sale', '2023-09-02 09:30:00', 189500.00, 'transfer', 'INV-2024-010', 'Vente Porsche 911'),
-(10, 2, 8, 2, 'sale', '2023-09-09 12:45:00', 32900.00, 'card', 'INV-2024-011', 'Vente Peugeot 308'),
-(11, 1, 10, 1, 'sale', '2023-09-16 14:20:00', 159900.00, 'transfer', 'INV-2024-012', 'Vente Audi RS Q8'),
-(12, 2, 12, 2, 'sale', '2023-09-23 07:15:00', 69900.00, 'card', 'INV-2024-013', 'Vente Lexus NX'),
-(13, 1, 13, 1, 'sale', '2023-09-30 11:45:00', 79900.00, 'transfer', 'INV-2024-014', 'Vente Alpine A110'),
-(14, 2, 14, 2, 'sale', '2023-10-06 08:30:00', 219900.00, 'transfer', 'INV-2024-015', 'Vente Nissan GT-R'),
-(15, 1, 15, 1, 'sale', '2023-10-13 13:20:00', 42900.00, 'card', 'INV-2024-016', 'Vente VW Transporter'),
-(16, 2, 16, 2, 'sale', '2023-10-20 09:45:00', 32900.00, 'cash', 'INV-2024-017', 'Vente Ford Transit'),
-(17, 1, 3, 1, 'sale', '2023-10-27 12:30:00', 85000.00, 'transfer', 'INV-2024-018', 'Vente BMW M4'),
-(18, 2, 1, 2, 'sale', '2023-11-04 08:15:00', 155000.00, 'transfer', 'INV-2024-019', 'Vente Mercedes AMG'),
-(19, 1, 4, 1, 'sale', '2023-11-11 15:45:00', 125000.00, 'card', 'INV-2024-020', 'Vente Tesla Model S'),
-(20, 2, 7, 2, 'sale', '2023-11-18 12:30:00', 23500.00, 'cash', 'INV-2024-021', 'Vente Clio RS'),
-(21, 1, 10, 1, 'sale', '2023-11-25 09:20:00', 155000.00, 'transfer', 'INV-2024-022', 'Vente Audi RS Q8'),
-(22, 2, 2, 2, 'sale', '2023-12-01 10:30:00', 185000.00, 'transfer', 'INV-2023-023', 'Vente Porsche 911'),
-(23, 1, 5, 1, 'sale', '2023-12-08 13:15:00', 185000.00, 'card', 'INV-2023-024', 'Vente Porsche Taycan'),
-(24, 2, 13, 2, 'sale', '2023-12-15 15:45:00', 77500.00, 'transfer', 'INV-2023-025', 'Vente Alpine A110'),
-(25, 1, 11, 1, 'sale', '2023-12-20 08:30:00', 41500.00, 'card', 'INV-2023-026', 'Vente Toyota RAV4'),
-(26, 4, 16, 2, 'sale', '2025-02-17 10:47:57', 32900.00, 'card', 'INV-2025-8696', 'la voiture bleu'),
-(27, 4, 17, 2, 'sale', '2025-02-17 10:54:31', 999999.99, 'card', 'INV-2025-4340', 'la voiture bleu'),
-(28, 1, 13, 1, 'purchase', '2025-02-17 11:13:32', 79900.00, 'card', 'INV-2025-9916', 'jj'),
-(29, 9, 3, 1, 'sale', '2025-02-17 13:41:33', 89900.00, 'card', 'INV-2025-5824', ''),
-(30, 11, 23, 1, 'sale', '2025-02-17 13:42:50', 35900.00, 'card', 'INV-2025-5077', ''),
-(31, 1, 22, 1, 'sale', '2025-02-17 14:31:36', 19900.00, 'card', 'INV-2025-7953', 'negro');
+INSERT INTO `transactions` (`id`, `customer_id`, `vehicle_id`, `user_id`, `transaction_type`, `transaction_date`, `price`, `payment_method`, `invoice_number`, `notes`, `status`) VALUES
+(1, 1, 3, 1, 'sale', '2023-07-05 08:30:00', 89900.00, 'card', 'INV-2024-002', 'Vente BMW M4', 'completed'),
+(2, 2, 5, 2, 'sale', '2023-07-12 12:15:00', 189900.00, 'transfer', 'INV-2024-003', 'Vente Porsche Taycan', 'completed'),
+(3, 1, 7, 1, 'sale', '2023-07-20 09:45:00', 24900.00, 'card', 'INV-2024-004', 'Vente Clio RS', 'completed'),
+(4, 2, 9, 2, 'sale', '2023-07-28 14:20:00', 149900.00, 'transfer', 'INV-2024-005', 'Vente Range Rover', 'completed'),
+(5, 1, 1, 1, 'sale', '2023-08-03 07:30:00', 158900.00, 'transfer', 'INV-2024-006', 'Vente Mercedes AMG GT', 'completed'),
+(6, 2, 4, 2, 'sale', '2023-08-10 13:45:00', 129900.00, 'card', 'INV-2024-007', 'Vente Tesla Model S', 'completed'),
+(7, 1, 6, 1, 'sale', '2023-08-18 11:20:00', 38900.00, 'card', 'INV-2024-008', 'Vente Golf GTI', 'completed'),
+(8, 2, 11, 2, 'sale', '2023-08-25 08:15:00', 42900.00, 'cash', 'INV-2024-009', 'Vente Toyota RAV4', 'completed'),
+(9, 1, 2, 1, 'sale', '2023-09-02 09:30:00', 189500.00, 'transfer', 'INV-2024-010', 'Vente Porsche 911', 'completed'),
+(10, 2, 8, 2, 'sale', '2023-09-09 12:45:00', 32900.00, 'card', 'INV-2024-011', 'Vente Peugeot 308', 'completed'),
+(11, 1, 10, 1, 'sale', '2023-09-16 14:20:00', 159900.00, 'transfer', 'INV-2024-012', 'Vente Audi RS Q8', 'completed'),
+(12, 2, 12, 2, 'sale', '2023-09-23 07:15:00', 69900.00, 'card', 'INV-2024-013', 'Vente Lexus NX', 'completed'),
+(13, 1, 13, 1, 'sale', '2023-09-30 11:45:00', 79900.00, 'transfer', 'INV-2024-014', 'Vente Alpine A110', 'completed'),
+(14, 2, 14, 2, 'sale', '2023-10-06 08:30:00', 219900.00, 'transfer', 'INV-2024-015', 'Vente Nissan GT-R', 'completed'),
+(15, 1, 15, 1, 'sale', '2023-10-13 13:20:00', 42900.00, 'card', 'INV-2024-016', 'Vente VW Transporter', 'completed'),
+(16, 2, 16, 2, 'sale', '2023-10-20 09:45:00', 32900.00, 'cash', 'INV-2024-017', 'Vente Ford Transit', 'completed'),
+(17, 1, 3, 1, 'sale', '2023-10-27 12:30:00', 85000.00, 'transfer', 'INV-2024-018', 'Vente BMW M4', 'completed'),
+(18, 2, 1, 2, 'sale', '2023-11-04 08:15:00', 155000.00, 'transfer', 'INV-2024-019', 'Vente Mercedes AMG', 'completed'),
+(19, 1, 4, 1, 'sale', '2023-11-11 15:45:00', 125000.00, 'card', 'INV-2024-020', 'Vente Tesla Model S', 'completed'),
+(20, 2, 7, 2, 'sale', '2023-11-18 12:30:00', 23500.00, 'cash', 'INV-2024-021', 'Vente Clio RS', 'completed'),
+(21, 1, 10, 1, 'sale', '2023-11-25 09:20:00', 155000.00, 'transfer', 'INV-2024-022', 'Vente Audi RS Q8', 'completed'),
+(22, 2, 2, 2, 'sale', '2023-12-01 10:30:00', 185000.00, 'transfer', 'INV-2023-023', 'Vente Porsche 911', 'completed'),
+(23, 1, 5, 1, 'sale', '2023-12-08 13:15:00', 185000.00, 'card', 'INV-2023-024', 'Vente Porsche Taycan', 'completed'),
+(24, 2, 13, 2, 'sale', '2023-12-15 15:45:00', 77500.00, 'transfer', 'INV-2023-025', 'Vente Alpine A110', 'completed'),
+(25, 1, 11, 1, 'sale', '2023-12-20 08:30:00', 41500.00, 'card', 'INV-2023-026', 'Vente Toyota RAV4', 'completed'),
+(26, 4, 16, 2, 'sale', '2025-02-17 10:47:57', 32900.00, 'card', 'INV-2025-8696', 'la voiture bleu', 'completed'),
+(27, 4, 17, 2, 'sale', '2025-02-17 10:54:31', 999999.99, 'card', 'INV-2025-4340', 'la voiture bleu', 'completed'),
+(28, 1, 13, 1, 'purchase', '2025-02-17 11:13:32', 79900.00, 'card', 'INV-2025-9916', 'jj', 'completed'),
+(29, 9, 3, 1, 'sale', '2025-02-17 13:41:33', 89900.00, 'card', 'INV-2025-5824', '', 'completed'),
+(30, 11, 23, 1, 'sale', '2025-02-17 13:42:50', 35900.00, 'card', 'INV-2025-5077', '', 'completed'),
+(31, 1, 22, 1, 'sale', '2025-02-17 14:31:36', 19900.00, 'card', 'INV-2025-7953', 'negro', 'completed');
 
 -- --------------------------------------------------------
 
@@ -344,6 +346,9 @@ INSERT INTO `vehicle_images` (`id`, `vehicle_id`, `file_name`, `file_path`, `is_
 (6, 1, '67b32ed435ac8.jpg', '/uploads/vehicles/1/67b32ed435ac8.jpg', 1, '2025-02-17 12:43:00'),
 (7, 36, '67b33b5e131ce.jpg', '/uploads/vehicles/36/67b33b5e131ce.jpg', 1, '2025-02-17 13:36:30'),
 (8, 36, '67b33b5e138cf.jpg', '/uploads/vehicles/36/67b33b5e138cf.jpg', 0, '2025-02-17 13:36:30');
+
+-- Mettre à jour les transactions existantes
+UPDATE transactions SET status = 'completed' WHERE status IS NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
