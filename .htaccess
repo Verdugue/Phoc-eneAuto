@@ -1,1 +1,12 @@
+RewriteEngine On
+RewriteBase /
+
+# Si le fichier ou dossier n'existe pas
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Rediriger vers le router.php
+RewriteRule ^(.*)$ router.php [QSA,L]
+
+# Page d'erreur 404
 ErrorDocument 404 /404.php 

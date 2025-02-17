@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once '../init.php';
 require_once '../config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,7 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
             
-            header('Location: ../profile.php');
+            // Rediriger vers l'URL sauvegardée ou la page par défaut
+            $redirect_url = isset($_SESSION['redirect_url']) ? $_SESSION['redirect_url'] : '../profile.php';
+            unset($_SESSION['redirect_url']); // Nettoyer la variable de session
+            
+            header('Location: ' . $redirect_url);
             exit;
         } else {
             $error = "Nom d'utilisateur ou mot de passe incorrect";

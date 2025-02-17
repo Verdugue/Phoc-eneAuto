@@ -4,7 +4,7 @@ color 0A
 
 :: Définir le chemin vers PHP de WAMP64
 set PHP_PATH=C:\wamp64\bin\php\php8.2.18\php.exe
-set PORT=9000
+set PORT=9090
 
 :: Vérifier si PHP existe dans WAMP64
 if not exist "%PHP_PATH%" (
@@ -38,4 +38,4 @@ echo.
 start http://localhost:%PORT%
 
 :: Démarrer le serveur PHP avec le chemin complet
-php -S localhost:9000 router.php 
+php -S localhost:9090 router.php 

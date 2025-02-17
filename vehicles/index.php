@@ -130,10 +130,10 @@ try {
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="edit.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-sm btn-primary">
+                                    <a href="/vehicles/edit.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-sm btn-primary">
                                         <i class="fa fa-edit"></i>
                                     </a>
-                                    <a href="view.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-sm btn-info">
+                                    <a href="/vehicles/view.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-sm btn-info">
                                         <i class="fa fa-eye"></i>
                                     </a>
                                     <button onclick="deleteVehicle(<?php echo $vehicle['id']; ?>)" 

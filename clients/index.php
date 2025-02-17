@@ -58,10 +58,10 @@ try {
                             <td><?php echo htmlspecialchars($client['city']); ?></td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-primary">
+                                    <a href="/clients/edit.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-primary">
                                         <i class="fa fa-edit"></i>
                                     </a>
-                                    <a href="view.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-info">
+                                    <a href="/clients/view.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-info">
                                         <i class="fa fa-eye"></i>
                                     </a>
                                     <button onclick="deleteClient(<?php echo $client['id']; ?>)" class="btn btn-sm btn-danger">

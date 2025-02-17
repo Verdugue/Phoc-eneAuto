@@ -1,5 +1,10 @@
 <?php
+require_once __DIR__ . '/../init.php';
+
+// Vérifier si l'utilisateur est connecté
 if (!isset($_SESSION['user_id'])) {
+    // Sauvegarder l'URL actuelle pour rediriger après la connexion
+    $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
     header('Location: /auth/login.php');
     exit;
 }
