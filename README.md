@@ -1,4 +1,4 @@
-# AutoCar Manager - Gestion de Concession Automobile
+# Phocéenne Auto - Gestion de Concession Automobile
 
 ## Présentation du Projet
 Application web de gestion de concession automobile permettant de gérer les véhicules, clients, fournisseurs et transactions.
