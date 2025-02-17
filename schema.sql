@@ -6,6 +6,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'employee')),
+    profile_image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -38,10 +39,10 @@ CREATE TABLE vehicles (
     transmission VARCHAR(20),
     registration_number VARCHAR(20) UNIQUE,
     vin_number VARCHAR(17) UNIQUE,
-    status VARCHAR(20) CHECK (status IN ('available', 'sold', 'reserved')),
+    status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'reserved', 'sold')),
+    supplier_id INTEGER REFERENCES suppliers(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    supplier_id INTEGER REFERENCES suppliers(id)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table des transactions
@@ -51,40 +52,30 @@ CREATE TABLE transactions (
     vehicle_id INTEGER REFERENCES vehicles(id),
     user_id INTEGER REFERENCES users(id),
     transaction_type VARCHAR(20) CHECK (transaction_type IN ('sale', 'purchase')),
-    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     price DECIMAL(10,2) NOT NULL,
-    payment_method VARCHAR(20),
+    payment_method VARCHAR(50),
     invoice_number VARCHAR(50) UNIQUE,
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     notes TEXT
-);
-
--- Table des documents
-CREATE TABLE documents (
-    id SERIAL PRIMARY KEY,
-    transaction_id INTEGER REFERENCES transactions(id),
-    document_type VARCHAR(20) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Table des photos de véhicules
-CREATE TABLE vehicle_images (
-    id SERIAL PRIMARY KEY,
-    vehicle_id INTEGER REFERENCES vehicles(id),
-    file_name VARCHAR(255) NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
-    is_primary BOOLEAN DEFAULT false,
-    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table des documents clients
 CREATE TABLE customer_documents (
     id SERIAL PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(id),
-    document_type VARCHAR(50) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_path VARCHAR(255) NOT NULL,
+    document_type VARCHAR(50) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des images de véhicules
+CREATE TABLE vehicle_images (
+    id SERIAL PRIMARY KEY,
+    vehicle_id INTEGER REFERENCES vehicles(id),
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    is_primary BOOLEAN DEFAULT false,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -98,9 +89,18 @@ CREATE TABLE suppliers (
     address TEXT,
     postal_code VARCHAR(10),
     city VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT true
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des documents de transaction
+CREATE TABLE transaction_documents (
+    id SERIAL PRIMARY KEY,
+    transaction_id INTEGER REFERENCES transactions(id),
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    document_type VARCHAR(50) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insertion des données initiales
