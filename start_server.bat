@@ -38,4 +38,4 @@ echo.
 start http://localhost:%PORT%
 
 :: Démarrer le serveur PHP avec le chemin complet
-"%PHP_PATH%" -S localhost:%PORT% 
+php -S localhost:9000 router.php 

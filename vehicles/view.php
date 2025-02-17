@@ -49,14 +49,122 @@ try {
     </div>
 </div>
 
-<div class="row">
-    <!-- Galerie d'images -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h3>Photos du Véhicule</h3>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <!-- Informations principales -->
+            <div class="col-md-8">
+                <h2 class="mb-3"><?php echo htmlspecialchars($vehicle['brand'] ?? '') . ' ' . htmlspecialchars($vehicle['model'] ?? ''); ?></h2>
+                <div class="mb-4">
+                    <h3 class="text-primary mb-0"><?php echo number_format($vehicle['price'] ?? 0, 2, ',', ' '); ?> €</h3>
+                    <div class="mt-2">
+                        <span class="badge bg-<?php echo $vehicle['vehicle_condition'] === 'new' ? 'success' : 'info'; ?> me-2">
+                            <?php echo $vehicle['vehicle_condition'] === 'new' ? 'Neuf' : 'Occasion'; ?>
+                        </span>
+                        <span class="badge bg-<?php 
+                            echo $vehicle['status'] === 'available' ? 'success' : 
+                                ($vehicle['status'] === 'reserved' ? 'warning' : 'danger'); ?>">
+                            <?php 
+                            echo $vehicle['status'] === 'available' ? 'Disponible' : 
+                                ($vehicle['status'] === 'reserved' ? 'Réservé' : 'Vendu'); 
+                            ?>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Caractéristiques principales -->
+                <div class="row mb-4">
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <div class="card h-100 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fa fa-calendar fa-2x mb-2 text-primary"></i>
+                                <h6 class="mb-1">Année</h6>
+                                <p class="mb-0"><?php echo htmlspecialchars($vehicle['year'] ?? ''); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <div class="card h-100 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fa fa-road fa-2x mb-2 text-primary"></i>
+                                <h6 class="mb-1">Kilométrage</h6>
+                                <p class="mb-0"><?php echo number_format($vehicle['mileage'] ?? 0, 0, ',', ' '); ?> km</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <div class="card h-100 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fa fa-tachometer fa-2x mb-2 text-primary"></i>
+                                <h6 class="mb-1">Carburant</h6>
+                                <p class="mb-0"><?php echo htmlspecialchars($vehicle['fuel_type'] ?? ''); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3 mb-3">
+                        <div class="card h-100 bg-light">
+                            <div class="card-body text-center">
+                                <i class="fa fa-cog fa-2x mb-2 text-primary"></i>
+                                <h6 class="mb-1">Transmission</h6>
+                                <p class="mb-0"><?php echo htmlspecialchars($vehicle['transmission'] ?? ''); ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations détaillées -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fa fa-info-circle me-2"></i>Caractéristiques</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <th>Couleur</th>
+                                            <td><?php echo htmlspecialchars($vehicle['color'] ?? ''); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>État</th>
+                                            <td><?php echo $vehicle['vehicle_condition'] === 'new' ? 'Neuf' : 'Occasion'; ?></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fa fa-file-alt me-2"></i>Informations légales</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <th>Immatriculation</th>
+                                            <td><?php echo htmlspecialchars($vehicle['registration_number'] ?? ''); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>N° de série</th>
+                                            <td><?php echo htmlspecialchars($vehicle['vin'] ?? ''); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Date d'ajout</th>
+                                            <td><?php echo date('d/m/Y', strtotime($vehicle['created_at'] ?? 'now')); ?></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
+
+            <!-- Galerie d'images -->
+            <div class="col-md-4">
                 <?php if (!empty($images)): ?>
                     <div id="vehicleCarousel" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner">
@@ -97,70 +205,6 @@ try {
                         <p class="mt-2">Aucune photo disponible</p>
                     </div>
                 <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <!-- Informations du véhicule -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3><?php echo htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']); ?></h3>
-                <div class="btn-group">
-                    <a href="edit.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-primary">
-                        <i class="fa fa-edit"></i> Modifier
-                    </a>
-                    <?php if ($vehicle['status'] === 'available'): ?>
-                        <button onclick="deleteVehicle(<?php echo $vehicle['id']; ?>)" 
-                                class="btn btn-danger">
-                            <i class="fa fa-trash"></i> Supprimer
-                        </button>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h5 class="text-primary">Prix</h5>
-                        <h3><?php echo number_format($vehicle['price'], 2, ',', ' '); ?> €</h3>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <span class="badge bg-<?php echo $vehicle['vehicle_condition'] === 'new' ? 'success' : 'info'; ?> mb-2">
-                            <?php echo $vehicle['vehicle_condition'] === 'new' ? 'Neuf' : 'Occasion'; ?>
-                        </span>
-                        <br>
-                        <span class="badge bg-<?php 
-                            echo $vehicle['status'] === 'available' ? 'success' : 
-                                 ($vehicle['status'] === 'reserved' ? 'warning' : 'danger'); ?>">
-                            <?php 
-                            echo $vehicle['status'] === 'available' ? 'Disponible' : 
-                                 ($vehicle['status'] === 'reserved' ? 'Réservé' : 'Vendu'); 
-                            ?>
-                        </span>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h5>Caractéristiques</h5>
-                        <ul class="list-unstyled">
-                            <li><strong>Année :</strong> <?php echo htmlspecialchars($vehicle['year']); ?></li>
-                            <li><strong>Kilométrage :</strong> <?php echo number_format($vehicle['mileage'], 0, ',', ' '); ?> km</li>
-                            <li><strong>Carburant :</strong> <?php echo htmlspecialchars($vehicle['fuel_type']); ?></li>
-                            <li><strong>Transmission :</strong> <?php echo htmlspecialchars($vehicle['transmission']); ?></li>
-                            <li><strong>Couleur :</strong> <?php echo htmlspecialchars($vehicle['color']); ?></li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <h5>Informations légales</h5>
-                        <ul class="list-unstyled">
-                            <li><strong>Immatriculation :</strong> <?php echo htmlspecialchars($vehicle['registration_number']); ?></li>
-                            <li><strong>N° de série :</strong> <?php echo htmlspecialchars($vehicle['vin_number']); ?></li>
-                            <li><strong>Date d'ajout :</strong> <?php echo date('d/m/Y', strtotime($vehicle['created_at'])); ?></li>
-                            <li><strong>Dernière mise à jour :</strong> <?php echo date('d/m/Y', strtotime($vehicle['updated_at'])); ?></li>
-                        </ul>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

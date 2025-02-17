@@ -57,15 +57,17 @@ try {
                             <td><?php echo htmlspecialchars($client['phone']); ?></td>
                             <td><?php echo htmlspecialchars($client['city']); ?></td>
                             <td>
-                                <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-primary">
-                                    <i class="fa fa-edit"></i>
-                                </a>
-                                <a href="view.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-info">
-                                    <i class="fa fa-eye"></i>
-                                </a>
-                                <button onclick="deleteClient(<?php echo $client['id']; ?>)" class="btn btn-sm btn-danger">
-                                    <i class="fa fa-trash"></i>
-                                </button>
+                                <div class="btn-group">
+                                    <a href="edit.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-primary">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="view.php?id=<?php echo $client['id']; ?>" class="btn btn-sm btn-info">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <button onclick="deleteClient(<?php echo $client['id']; ?>)" class="btn btn-sm btn-danger">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -90,8 +92,12 @@ function deleteClient(id) {
             if (data.success) {
                 location.reload();
             } else {
-                alert(data.error);
+                alert('Erreur lors de la suppression : ' + data.error);
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Une erreur est survenue lors de la suppression');
         });
     }
 }

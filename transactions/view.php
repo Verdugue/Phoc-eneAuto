@@ -47,60 +47,118 @@ try {
 
     <div class="row">
         <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Transaction #<?php echo $transaction['invoice_number']; ?></h3>
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                    <h3 class="mb-0">
+                        <i class="fa fa-file-text-o me-2"></i>
+                        Transaction #<?php echo $transaction['invoice_number']; ?>
+                    </h3>
                     <a href="print_invoice.php?id=<?php echo $transaction['id']; ?>" 
-                       class="btn btn-primary" target="_blank">
-                        <i class="fa fa-file-text-o"></i> Voir la facture
+                       class="btn btn-light" target="_blank">
+                        <i class="fa fa-print me-2"></i> Imprimer la facture
                     </a>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
+                    <!-- Informations générales dans des cartes -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h5>Informations générales</h5>
-                            <ul class="list-unstyled">
-                                <li><strong>Date:</strong> <?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></li>
-                                <li><strong>Type:</strong> 
-                                    <span class="badge bg-<?php echo $transaction['transaction_type'] === 'sale' ? 'success' : 'info'; ?>">
+                        <div class="col-md-3">
+                            <div class="card h-100 bg-light border-0">
+                                <div class="card-body text-center">
+                                    <i class="fa fa-calendar fa-2x mb-2 text-primary"></i>
+                                    <h6 class="text-muted mb-1">Date</h6>
+                                    <p class="mb-0 fw-bold"><?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card h-100 bg-light border-0">
+                                <div class="card-body text-center">
+                                    <i class="fa fa-exchange fa-2x mb-2 text-primary"></i>
+                                    <h6 class="text-muted mb-1">Type</h6>
+                                    <span class="badge bg-<?php echo $transaction['transaction_type'] === 'sale' ? 'success' : 'info'; ?> px-3 py-2">
                                         <?php echo $transaction['transaction_type'] === 'sale' ? 'Vente' : 'Achat'; ?>
                                     </span>
-                                </li>
-                                <li><strong>Montant:</strong> <?php echo number_format($transaction['price'], 2, ',', ' '); ?> €</li>
-                                <li><strong>Vendeur:</strong> <?php echo htmlspecialchars($transaction['vendeur']); ?></li>
-                            </ul>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <h5>Méthode de paiement</h5>
-                            <ul class="list-unstyled">
-                                <li><strong>Mode:</strong> <?php echo htmlspecialchars($transaction['payment_method']); ?></li>
-                            </ul>
+                        <div class="col-md-3">
+                            <div class="card h-100 bg-light border-0">
+                                <div class="card-body text-center">
+                                    <i class="fa fa-eur fa-2x mb-2 text-primary"></i>
+                                    <h6 class="text-muted mb-1">Montant</h6>
+                                    <p class="mb-0 fw-bold"><?php echo number_format($transaction['price'], 2, ',', ' '); ?> €</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card h-100 bg-light border-0">
+                                <div class="card-body text-center">
+                                    <i class="fa fa-credit-card fa-2x mb-2 text-primary"></i>
+                                    <h6 class="text-muted mb-1">Paiement</h6>
+                                    <p class="mb-0 fw-bold"><?php echo htmlspecialchars($transaction['payment_method']); ?></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Détails du client et du véhicule -->
                     <div class="row">
                         <div class="col-md-6">
-                            <h5>Client</h5>
-                            <ul class="list-unstyled">
-                                <li><strong>Nom:</strong> <?php echo htmlspecialchars($transaction['first_name'] . ' ' . $transaction['last_name']); ?></li>
-                                <li><strong>Email:</strong> <?php echo htmlspecialchars($transaction['email']); ?></li>
-                                <li><strong>Téléphone:</strong> <?php echo htmlspecialchars($transaction['phone']); ?></li>
-                            </ul>
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fa fa-user me-2 text-primary"></i>Client</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <th class="ps-0 text-muted">Nom</th>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars(($transaction['first_name'] ?? '') . ' ' . ($transaction['last_name'] ?? '')); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="ps-0 text-muted">Email</th>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars($transaction['email'] ?? ''); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="ps-0 text-muted">Téléphone</th>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars($transaction['phone'] ?? ''); ?></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <h5>Véhicule</h5>
-                            <ul class="list-unstyled">
-                                <li><strong>Marque/Modèle:</strong> <?php echo htmlspecialchars($transaction['brand'] . ' ' . $transaction['model']); ?></li>
-                                <li><strong>Année:</strong> <?php echo htmlspecialchars($transaction['year']); ?></li>
-                                <li><strong>Immatriculation:</strong> <?php echo htmlspecialchars($transaction['registration_number']); ?></li>
-                            </ul>
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fa fa-car me-2 text-primary"></i>Véhicule</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <th class="ps-0 text-muted">Marque/Modèle</th>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars(($transaction['brand'] ?? '') . ' ' . ($transaction['model'] ?? '')); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="ps-0 text-muted">Année</th>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars($transaction['year'] ?? ''); ?></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="ps-0 text-muted">Immatriculation</th>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars($transaction['registration_number'] ?? ''); ?></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <?php if ($transaction['notes']): ?>
-                        <div class="mt-4">
-                            <h5>Notes</h5>
-                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($transaction['notes'])); ?></p>
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fa fa-sticky-note me-2 text-primary"></i>Notes</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0"><?php echo nl2br(htmlspecialchars($transaction['notes'])); ?></p>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -108,9 +166,9 @@ try {
         </div>
 
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Documents</h5>
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fa fa-files-o me-2 text-primary"></i>Documents</h5>
                 </div>
                 <div class="card-body">
                     <?php
@@ -124,20 +182,62 @@ try {
                         <div class="list-group">
                             <?php foreach ($documents as $doc): ?>
                                 <a href="<?php echo htmlspecialchars($doc['file_path']); ?>" 
-                                   class="list-group-item list-group-item-action"
-                                   target="_blank">
-                                    <i class="fa fa-file-o me-2"></i>
-                                    <?php echo htmlspecialchars($doc['document_type']); ?>
+                                   class="list-group-item list-group-item-action d-flex align-items-center py-3 px-3">
+                                    <i class="fa fa-file-pdf-o text-danger me-3 fa-lg"></i>
+                                    <div>
+                                        <h6 class="mb-0"><?php echo htmlspecialchars($doc['document_type']); ?></h6>
+                                        <small class="text-muted">Ajouté le <?php echo date('d/m/Y', strtotime($doc['uploaded_at'])); ?></small>
+                                    </div>
+                                    <i class="fa fa-download ms-auto text-muted"></i>
                                 </a>
                             <?php endforeach; ?>
                         </div>
                     <?php else: ?>
-                        <p class="text-muted mb-0">Aucun document disponible</p>
+                        <div class="text-center py-4">
+                            <i class="fa fa-file-o fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">Aucun document disponible</p>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.list-group-item {
+    transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(3px);
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important;
+}
+</style>
 
 <?php require_once '../includes/footer.php'; ?> 

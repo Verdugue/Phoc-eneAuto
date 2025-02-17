@@ -86,42 +86,40 @@ try {
 }
 ?>
 
-<div class="container mt-4">
-    <!-- Cartes des indicateurs clés -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Véhicules disponibles</h6>
-                    <h2 class="mb-0"><?php echo $vehicleStats['available'] ?? 0; ?></h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h6 class="card-title">CA du mois</h6>
-                    <h2 class="mb-0"><?php echo number_format($currentMonthRevenue, 0, ',', ' '); ?> €</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Clients actifs</h6>
-                    <h2 class="mb-0"><?php echo $activeCustomers; ?></h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h6 class="card-title">Véhicules réservés</h6>
-                    <h2 class="mb-0"><?php echo $vehicleStats['reserved'] ?? 0; ?></h2>
-                </div>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body" style="cursor: pointer" onclick="window.location.href='/vehicles/search.php?status=available'">
+                <h6 class="card-title">Véhicules disponibles</h6>
+                <h2 class="mb-0"><?php echo $vehicleStats['available'] ?? 0; ?></h2>
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body" style="cursor: pointer" onclick="window.location.href='/transactions/'">
+                <h6 class="card-title">CA du mois</h6>
+                <h2 class="mb-0"><?php echo number_format($currentMonthRevenue, 0, ',', ' '); ?> €</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body" style="cursor: pointer" onclick="window.location.href='/clients/'">
+                <h6 class="card-title">Clients actifs</h6>
+                <h2 class="mb-0"><?php echo $activeCustomers; ?></h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body" style="cursor: pointer" onclick="window.location.href='/vehicles/search.php?status=reserved'">
+                <h6 class="card-title">Véhicules réservés</h6>
+                <h2 class="mb-0"><?php echo $vehicleStats['reserved'] ?? 0; ?></h2>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="row">
         <!-- Graphique des ventes -->
@@ -168,29 +166,20 @@ try {
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <?php
-                        $stmt = $pdo->query("
-                            SELECT t.*, v.brand, v.model, c.first_name, c.last_name
-                            FROM transactions t
-                            JOIN vehicles v ON t.vehicle_id = v.id
-                            JOIN customers c ON t.customer_id = c.id
-                            ORDER BY t.transaction_date DESC
-                            LIMIT 5
-                        ");
-                        $recentTransactions = $stmt->fetchAll();
-                        ?>
-                        <table class="table">
+                        <table class="table table-striped table-bordered align-middle">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Client</th>
-                                    <th>Véhicule</th>
-                                    <th>Montant</th>
+                                    <th class="text-light">Date</th>
+                                    <th class="text-light">Client</th>
+                                    <th class="text-light">Véhicule</th>
+                                    <th class="text-light">Montant</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($recentTransactions as $transaction): ?>
-                                    <tr>
+                                    <tr style="cursor: pointer" 
+                                        onclick="window.location.href='/transactions/view.php?id=<?php echo $transaction['id']; ?>'"
+                                        class="transaction-row">
                                         <td><?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></td>
                                         <td><?php echo htmlspecialchars($transaction['first_name'] . ' ' . $transaction['last_name']); ?></td>
                                         <td><?php echo htmlspecialchars($transaction['brand'] . ' ' . $transaction['model']); ?></td>
@@ -314,6 +303,14 @@ new Chart(stockCtx, {
     }
 });
 </script>
+
+<!-- Ajouter le style pour l'effet de survol -->
+<style>
+.transaction-row:hover {
+    background-color: #f5f5f5;
+    transition: background-color 0.2s ease;
+}
+</style>
 
 </body>
 </html> 

@@ -33,24 +33,31 @@ body {
     color: rgba(255,255,255,0.9) !important;
     transition: all 0.3s ease;
     position: relative;
-}
-
-.nav-link:hover {
-    color: white !important;
+    padding-bottom: 1rem !important;  /* Espace pour la barre */
 }
 
 .nav-link::after {
     content: '';
     position: absolute;
     width: 0;
-    height: 2px;
+    height: 3px;  /* Épaisseur de la barre */
     bottom: 0;
     left: 0;
     background-color: white;
     transition: width 0.3s ease;
 }
 
-.nav-link:hover::after {
+/* Style pour l'onglet actif */
+.nav-link.active {
+    color: white !important;
+}
+
+.nav-link.active::after {
+    width: 100%;  /* Barre complète pour l'onglet actif */
+}
+
+/* Animation au survol seulement pour les onglets non actifs */
+.nav-link:not(.active):hover::after {
     width: 100%;
 }
 
@@ -188,4 +195,27 @@ body {
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+}
+
+/* Styles pour les tableaux */
+.table-bordered td, .table-bordered th {
+    border-left: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+}
+
+.table-bordered td:first-child, .table-bordered th:first-child {
+    border-left: none;
+}
+
+.table-bordered td:last-child, .table-bordered th:last-child {
+    border-right: none;
+}
+
+.card-body[onclick] {
+    transition: all 0.3s ease;
+}
+
+.card-body[onclick]:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
 } 

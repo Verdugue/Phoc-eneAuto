@@ -182,6 +182,33 @@ try {
                     <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                 </div>
 
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Documents</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="dropzone-container p-4 border rounded text-center" 
+                                     id="dropzone" 
+                                     ondrop="handleDrop(event)" 
+                                     ondragover="handleDragOver(event)"
+                                     ondragleave="handleDragLeave(event)">
+                                    <i class="fa fa-file-pdf-o fa-2x mb-2 text-muted"></i>
+                                    <p class="mb-2">Glissez et déposez vos documents ici</p>
+                                    <p class="text-muted small mb-2">ou</p>
+                                    <label class="btn btn-outline-primary mb-0">
+                                        <input type="file" name="documents[]" id="fileInput" multiple accept=".pdf,.doc,.docx" style="display: none;" onchange="handleFiles(this.files)">
+                                        Parcourir
+                                    </label>
+                                    <p class="text-muted small mt-2">PDF, Word (max 10 Mo)</p>
+                                </div>
+                                <div id="preview" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">Enregistrer la transaction</button>
                     <a href="/transactions/" class="btn btn-secondary">Annuler</a>
@@ -190,6 +217,215 @@ try {
         </div>
     </div>
 </div>
+
+<style>
+/* Style général du formulaire */
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+/* Style de la zone de dépôt */
+.dropzone-container {
+    border: 2px dashed #dee2e6 !important;
+    transition: all 0.3s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background-color: #f8f9fa;
+}
+
+.dropzone-container:hover {
+    border-color: #0d6efd !important;
+    background-color: #f1f4ff;
+}
+
+.dropzone-container.dragover {
+    border-color: #0d6efd !important;
+    background-color: #f1f4ff;
+    transform: scale(1.01);
+}
+
+/* Style des prévisualisations de documents */
+.document-preview {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: white;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.document-preview:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.document-preview .fa {
+    margin-right: 12px;
+    color: #0d6efd;
+}
+
+.document-preview .remove-file {
+    margin-left: auto;
+    cursor: pointer;
+    color: #dc3545;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    padding: 5px;
+}
+
+.document-preview .remove-file:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Style des cartes */
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.25rem;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Style des boutons */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #0d6efd, #0b5ed7);
+    border: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+}
+
+.btn-outline-primary {
+    border: 2px solid #0d6efd;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(45deg, #0d6efd, #0b5ed7);
+}
+
+/* Animation pour les messages d'erreur */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.is-invalid {
+    animation: shake 0.4s ease-in-out;
+}
+
+/* Style responsive */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .dropzone-container {
+        min-height: 150px;
+    }
+}
+
+.document-preview select {
+    margin: 0 10px;
+    max-width: 200px;
+}
+</style>
+
+<script>
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    handleFiles(files);
+    document.getElementById('dropzone').classList.remove('dragover');
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('dropzone').classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('dropzone').classList.remove('dragover');
+}
+
+function handleFiles(files) {
+    const preview = document.getElementById('preview');
+    const maxSize = 10 * 1024 * 1024; // 10 Mo
+
+    Array.from(files).forEach((file, index) => {
+        if (file.size > maxSize) {
+            alert(`Le fichier ${file.name} est trop volumineux. Taille maximum : 10 Mo`);
+            return;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'document-preview';
+        
+        div.innerHTML = `
+            <i class="fa fa-file-pdf-o"></i>
+            <span>${file.name}</span>
+            <select name="document_types[]" class="form-select form-select-sm mx-2" style="width: auto;" required>
+                <option value="">Type de document</option>
+                <option value="facture">Facture</option>
+                <option value="carte_grise">Carte grise</option>
+                <option value="controle_technique">Contrôle technique</option>
+                <option value="assurance">Assurance</option>
+                <option value="autre">Autre</option>
+            </select>
+            <i class="fa fa-times remove-file" onclick="this.parentElement.remove()"></i>
+        `;
+        
+        preview.appendChild(div);
+    });
+}
+</script>
 
 <script>
 // Auto-remplir le prix quand un véhicule est sélectionné

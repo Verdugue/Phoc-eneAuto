@@ -3,6 +3,9 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: /auth/login.php');
     exit;
 }
+
+$current_page = basename($_SERVER['PHP_SELF']);
+$current_dir = basename(dirname($_SERVER['PHP_SELF']));
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -25,26 +28,21 @@ if (!isset($_SESSION['user_id'])) {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/clients/">Clients</a>
+                        <a class="nav-link <?php echo $current_dir === 'clients' ? 'active' : ''; ?>" href="/clients/">Clients</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/vehicles/">Véhicules</a>
+                        <a class="nav-link <?php echo ($current_dir === 'vehicles' && $current_page !== 'search.php') ? 'active' : ''; ?>" href="/vehicles/">Véhicules</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/transactions/">Transactions</a>
+                        <a class="nav-link <?php echo $current_dir === 'transactions' ? 'active' : ''; ?>" href="/transactions/">Transactions</a>
                     </li>
-                    <?php if ($_SESSION['role'] === 'admin'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="/users/">Utilisateurs</a>
-                    </li>
-                    <?php endif; ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/vehicles/search.php">
+                        <a class="nav-link <?php echo ($current_page === 'search.php' && $current_dir === 'vehicles') ? 'active' : ''; ?>" href="/vehicles/search.php">
                             <i class="fa fa-search"></i> Recherche Avancée
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/dashboard.php">
+                        <a class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>" href="/dashboard.php">
                             <i class="fa fa-dashboard"></i> Tableau de bord
                         </a>
                     </li>

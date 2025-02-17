@@ -185,12 +185,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-6">
                                 <label for="brand" class="form-label">Marque *</label>
                                 <input type="text" class="form-control" id="brand" name="brand" 
-                                       value="<?php echo htmlspecialchars($vehicle['brand']); ?>" required>
+                                       value="<?php echo htmlspecialchars($vehicle['brand'] ?? ''); ?>" required>
                             </div>
                             <div class="col-md-6">
                                 <label for="model" class="form-label">Modèle *</label>
                                 <input type="text" class="form-control" id="model" name="model" 
-                                       value="<?php echo htmlspecialchars($vehicle['model']); ?>" required>
+                                       value="<?php echo htmlspecialchars($vehicle['model'] ?? ''); ?>" required>
                             </div>
                         </div>
 
@@ -198,17 +198,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-4">
                                 <label for="year" class="form-label">Année *</label>
                                 <input type="number" class="form-control" id="year" name="year" 
-                                       value="<?php echo htmlspecialchars($vehicle['year']); ?>" required>
+                                       value="<?php echo htmlspecialchars($vehicle['year'] ?? ''); ?>" required>
                             </div>
                             <div class="col-md-4">
                                 <label for="mileage" class="form-label">Kilométrage *</label>
                                 <input type="number" class="form-control" id="mileage" name="mileage" 
-                                       value="<?php echo htmlspecialchars($vehicle['mileage']); ?>" required>
+                                       value="<?php echo htmlspecialchars($vehicle['mileage'] ?? 0); ?>" required>
                             </div>
                             <div class="col-md-4">
                                 <label for="price" class="form-label">Prix *</label>
                                 <input type="number" step="0.01" class="form-control" id="price" name="price" 
-                                       value="<?php echo htmlspecialchars($vehicle['price']); ?>" required>
+                                       value="<?php echo htmlspecialchars($vehicle['price'] ?? 0); ?>" required>
                             </div>
                         </div>
 
@@ -223,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-4">
                                 <label for="color" class="form-label">Couleur</label>
                                 <input type="text" class="form-control" id="color" name="color" 
-                                       value="<?php echo htmlspecialchars($vehicle['color']); ?>">
+                                       value="<?php echo htmlspecialchars($vehicle['color'] ?? ''); ?>">
                             </div>
                             <div class="col-md-4">
                                 <label for="status" class="form-label">Statut *</label>
@@ -239,12 +239,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-6">
                                 <label for="fuel_type" class="form-label">Carburant</label>
                                 <input type="text" class="form-control" id="fuel_type" name="fuel_type" 
-                                       value="<?php echo htmlspecialchars($vehicle['fuel_type']); ?>">
+                                       value="<?php echo htmlspecialchars($vehicle['fuel_type'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label for="transmission" class="form-label">Transmission</label>
                                 <input type="text" class="form-control" id="transmission" name="transmission" 
-                                       value="<?php echo htmlspecialchars($vehicle['transmission']); ?>">
+                                       value="<?php echo htmlspecialchars($vehicle['transmission'] ?? ''); ?>">
                             </div>
                         </div>
 
@@ -252,12 +252,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="col-md-6">
                                 <label for="registration_number" class="form-label">Numéro d'immatriculation</label>
                                 <input type="text" class="form-control" id="registration_number" name="registration_number" 
-                                       value="<?php echo htmlspecialchars($vehicle['registration_number']); ?>">
+                                       value="<?php echo htmlspecialchars($vehicle['registration_number'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
                                 <label for="vin_number" class="form-label">Numéro de série (VIN)</label>
                                 <input type="text" class="form-control" id="vin_number" name="vin_number" 
-                                       value="<?php echo htmlspecialchars($vehicle['vin_number']); ?>">
+                                       value="<?php echo htmlspecialchars($vehicle['vin_number'] ?? ''); ?>">
                             </div>
                         </div>
 
