@@ -33,15 +33,15 @@ pip install composer
 ```
 
 3. Créer la base de données
-- Créer une base de données nommée `autocar_manager`
-- Importer le fichier `database/autocar_manager.sql`
+- Créer une base de données nommée `phoceenne_auto`
+- Importer le fichier `phoceenne_auto.sql`
 
 4. Configuration
 - Copier `config/database.example.php` vers `config/database.php`
 - Modifier les informations de connexion dans `config/database.php` :
 ```php
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'autocar_manager');
+define('DB_NAME', 'phoceenne_auto');
 define('DB_USER', 'root'); // Votre utilisateur MySQL
 define('DB_PASS', '');     // Votre mot de passe MySQL
 ```
@@ -81,7 +81,7 @@ autocar-manager/
 - Chart.js (CDN)
 
 ## Base de données
-Le fichier `database/autocar_manager.sql` contient :
+Le fichier `database/phoceenne_auto.sql` contient :
 - Structure complète de la base de données
 - Données de démonstration
 - Compte administrateur par défaut
