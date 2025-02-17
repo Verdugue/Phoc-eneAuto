@@ -83,6 +83,7 @@ try {
                         <th><a href="<?php echo getSortLink('mileage', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Kilométrage</a></th>
                         <th class="text-light">Statut</th>
                         <th class="text-light">Actions</th>
+                        <th class="text-light"></th>
                     </tr>
                 </thead>
                 <tbody>
