@@ -36,8 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'employee')");
-            $stmt->execute([$username, $email, $password_hash]);
+            
+            // Ajouter la photo de profil par défaut
+            $default_profile_image = '/assets/images/defaults/default-profile.png';
+            
+            $stmt = $pdo->prepare("
+                INSERT INTO users (username, email, password_hash, role, profile_image) 
+                VALUES (?, ?, ?, 'employee', ?)
+            ");
+            
+            $stmt->execute([$username, $email, $password_hash, $default_profile_image]);
 
             $_SESSION['success'] = "Compte créé avec succès. Vous pouvez maintenant vous connecter.";
             header('Location: login.php');

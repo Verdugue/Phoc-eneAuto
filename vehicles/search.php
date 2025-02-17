@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once '../init.php';
 require_once '../config/database.php';
 
 $page_title = "Recherche de Véhicules";

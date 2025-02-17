@@ -1,3 +1,5 @@
+CREATE DATABASE phoceenne_auto;
+
 -- Création des tables
 -- Table des utilisateurs (employés)
 CREATE TABLE users (
@@ -273,3 +275,13 @@ UPDATE vehicles SET supplier_id = 2 WHERE brand IN ('Porsche', 'Range Rover');
 UPDATE vehicles SET supplier_id = 3 WHERE brand IN ('Tesla');
 UPDATE vehicles SET supplier_id = 4 WHERE brand IN ('Alpine', 'Nissan');
 UPDATE vehicles SET supplier_id = 5 WHERE brand IN ('Toyota', 'Lexus');
+
+-- Mettre à jour les utilisateurs existants sans photo de profil
+UPDATE users 
+SET profile_image = '/assets/images/defaults/default-profile.png' 
+WHERE profile_image IS NULL;
+
+-- Modifier la colonne pour qu'elle ne soit plus NULL
+ALTER TABLE users 
+ALTER COLUMN profile_image 
+SET DEFAULT '/assets/images/defaults/default-profile.png';

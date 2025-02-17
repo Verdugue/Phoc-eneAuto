@@ -7,8 +7,9 @@ require_once 'includes/header.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $errors = [];
-        
+        $updates = [];
+        $params = [];
+
         // Gestion de l'upload de la photo
         if (!empty($_FILES['profile_image']['name'])) {
             $upload_dir = 'uploads/profiles/';
@@ -17,49 +18,40 @@ try {
             }
 
             $file_extension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
-            $allowed_extensions = ['jpg', 'jpeg', 'png'];
+            $new_filename = uniqid('profile_') . '.' . $file_extension;
+            $upload_path = $upload_dir . $new_filename;
 
-            if (!in_array($file_extension, $allowed_extensions)) {
-                $errors[] = "Format de fichier non autorisé. Utilisez JPG, JPEG ou PNG.";
-            } else {
-                $new_filename = uniqid() . '.' . $file_extension;
-                $upload_path = $upload_dir . $new_filename;
-
-                if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $upload_path)) {
-                    // Supprimer l'ancienne image si elle existe
-                    $stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
-                    $stmt->execute([$_SESSION['user_id']]);
-                    $old_image = $stmt->fetchColumn();
-                    
-                    if ($old_image && file_exists($old_image)) {
-                        unlink($old_image);
-                    }
-
-                    // Mettre à jour le chemin de l'image dans la base de données
-                    $stmt = $pdo->prepare("UPDATE users SET profile_image = ? WHERE id = ?");
-                    $stmt->execute([$upload_path, $_SESSION['user_id']]);
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $upload_path)) {
+                // Supprimer l'ancienne image si elle existe et n'est pas l'image par défaut
+                if (!empty($user['profile_image']) && 
+                    $user['profile_image'] !== '/assets/images/defaults/default-profile.png' && 
+                    file_exists($user['profile_image'])) {
+                    unlink($user['profile_image']);
                 }
+                
+                $updates[] = "profile_image = ?";
+                $params[] = '/' . $upload_path; // Ajouter le slash pour le chemin web
             }
         }
 
         // Mise à jour des autres informations du profil
-        if (empty($errors)) {
-            $stmt = $pdo->prepare("
-                UPDATE users 
-                SET username = ?, email = ?
-                WHERE id = ?
-            ");
-            
-            $stmt->execute([
-                $_POST['username'],
-                $_POST['email'],
-                $_SESSION['user_id']
-            ]);
-
-            $_SESSION['success'] = "Profil mis à jour avec succès";
+        if (empty($updates)) {
+            $_SESSION['error'] = "Aucune mise à jour nécessaire";
             header('Location: /profile.php');
             exit;
         }
+
+        $stmt = $pdo->prepare("
+            UPDATE users 
+            SET " . implode(', ', $updates) . "
+            WHERE id = ?
+        ");
+        
+        $stmt->execute(array_merge($params, [$_SESSION['user_id']]));
+
+        $_SESSION['success'] = "Profil mis à jour avec succès";
+        header('Location: /profile.php');
+        exit;
     }
 
     // Récupérer les informations de l'utilisateur
@@ -97,11 +89,11 @@ try {
                 <div class="card-body text-center">
                     <!-- Affichage du profil -->
                     <div id="profile-display">
-                        <div class="mb-4">
-                            <img src="<?php echo $user['profile_image'] ?: 'assets/images/default-profile.png'; ?>" 
-                                 class="rounded-circle mb-3" 
-                                 style="width: 150px; height: 150px; object-fit: cover;"
-                                 alt="Photo de profil">
+                        <div class="profile-image-container mb-3">
+                            <img src="<?php echo get_profile_image($user['profile_image']); ?>" 
+                                 class="img-thumbnail rounded-circle" 
+                                 alt="Photo de profil"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
                         </div>
                         <div class="mb-3">
                             <strong>Nom d'utilisateur:</strong>
@@ -125,19 +117,25 @@ try {
                     <div id="profile-edit" style="display: none;">
                         <form method="POST" enctype="multipart/form-data">
                             <div class="text-center mb-4">
-                                <div class="profile-image-container">
-                                    <img src="<?php echo $user['profile_image'] ?: 'assets/images/default-profile.png'; ?>" 
+                                <div class="profile-image-container position-relative">
+                                    <img src="<?php echo get_profile_image($user['profile_image']); ?>" 
                                          class="rounded-circle mb-3" 
                                          style="width: 150px; height: 150px; object-fit: cover;"
-                                         alt="Photo de profil">
-                                    <div class="mt-2">
-                                        <label for="profile_image" class="btn btn-outline-primary">
-                                            <i class="fa fa-camera"></i> Changer la photo
+                                         alt="Photo de profil"
+                                         id="profile-preview">
+                                    
+                                    <div class="mt-2 d-flex justify-content-center gap-2">
+                                        <label for="profile_image" class="btn btn-sm btn-primary">
+                                            <i class="fa fa-camera"></i> Changer
                                         </label>
-                                        <input type="file" id="profile_image" name="profile_image" 
-                                               class="d-none" accept="image/jpeg,image/png">
+                                        <?php if ($user['profile_image'] && $user['profile_image'] !== '/assets/images/defaults/default-profile.png'): ?>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteProfileImage()">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
+                                <input type="file" id="profile_image" name="profile_image" class="d-none" accept="image/*">
                             </div>
 
                             <div class="mb-3">
@@ -227,11 +225,35 @@ document.getElementById('profile_image').addEventListener('change', function(e) 
     if (e.target.files && e.target.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.querySelector('.profile-image-container img').src = e.target.result;
+            document.getElementById('profile-preview').src = e.target.result;
         }
         reader.readAsDataURL(e.target.files[0]);
     }
 });
+
+function deleteProfileImage() {
+    if (confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
+        fetch('delete_profile_image.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mettre à jour l'image affichée avec l'image par défaut
+                document.querySelectorAll('.profile-image-container img').forEach(img => {
+                    img.src = '/assets/images/defaults/default-profile.png';
+                });
+                // Recharger la page pour mettre à jour l'interface
+                location.reload();
+            } else {
+                alert(data.error || 'Une erreur est survenue');
+            }
+        });
+    }
+}
 </script>
 
 <?php require_once 'includes/footer.php'; ?> 

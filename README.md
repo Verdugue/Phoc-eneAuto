@@ -28,6 +28,8 @@ git clone https://github.com/Verdugue/Phoc-eneAuto.git
 2. Installer les dépendances
 ```bash
 composer install
+or
+pip install composer
 ```
 
 3. Créer la base de données

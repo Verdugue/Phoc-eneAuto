@@ -26,47 +26,71 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Phocéenne Auto</a>
+            <a class="navbar-brand" href="/">
+                <i class="fa fa-car"></i> Phocéenne Auto
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_dir === 'clients' ? 'active' : ''; ?>" href="/clients/">Clients</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_dir === 'vehicles' && $current_page !== 'search.php') ? 'active' : ''; ?>" href="/vehicles/">Véhicules</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo $current_dir === 'transactions' ? 'active' : ''; ?>" href="/transactions/">Transactions</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page === 'search.php' && $current_dir === 'vehicles') ? 'active' : ''; ?>" href="/vehicles/search.php">
-                            <i class="fa fa-search"></i> Recherche Avancée
+                        <a class="nav-link <?php echo $current_dir === 'clients' ? 'active' : ''; ?>" 
+                           href="/clients/">
+                            <i class="fa fa-users"></i> Clients
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>" href="/dashboard.php">
-                            <i class="fa fa-dashboard"></i> Tableau de bord
+                        <a class="nav-link <?php echo ($current_dir === 'vehicles' && $current_page !== 'search.php') ? 'active' : ''; ?>" 
+                           href="/vehicles/">
+                            <i class="fa fa-car"></i> Véhicules
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/suppliers.php">Fournisseurs</a>
+                        <a class="nav-link <?php echo $current_dir === 'transactions' ? 'active' : ''; ?>" 
+                           href="/transactions/">
+                            <i class="fa fa-exchange"></i> Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo ($current_page === 'search.php' && $current_dir === 'vehicles') ? 'active' : ''; ?>" 
+                           href="/vehicles/search.php">
+                            <i class="fa fa-search"></i> Recherche
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo $current_page === 'dashboard.php' ? 'active' : ''; ?>" 
+                           href="/dashboard.php">
+                            <i class="fa fa-tachometer"></i> Tableau de bord
+                        </a>
                     </li>
                 </ul>
-                <div class="navbar-nav">
+                <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fa fa-user"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="<?php echo get_profile_image($_SESSION['profile_image'] ?? null); ?>" 
+                                 alt="Profile" 
+                                 class="rounded-circle me-2"
+                                 style="width: 30px; height: 30px; object-fit: cover;">
+                            <?php echo htmlspecialchars($_SESSION['username']); ?>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/profile.php">Mon Profil</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li>
+                                <a class="dropdown-item <?php echo $current_page === 'profile.php' ? 'active' : ''; ?>" 
+                                   href="/profile.php">
+                                    <i class="fa fa-user-circle"></i> Mon Profil
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/auth/logout.php">Déconnexion</a></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="/auth/logout.php">
+                                    <i class="fa fa-sign-out"></i> Déconnexion
+                                </a>
+                            </li>
                         </ul>
                     </li>
-                </div>
+                </ul>
             </div>
         </div>
     </nav>

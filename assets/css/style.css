@@ -21,44 +21,107 @@ body {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding: 1rem 0;
+    height: 70px; /* Hauteur fixe pour la navbar */
 }
 
 .navbar-brand {
     font-weight: 700;
     font-size: 1.5rem;
     color: white !important;
+    padding: 0 1.5rem;
 }
 
-.nav-link {
-    color: rgba(255,255,255,0.9) !important;
-    transition: all 0.3s ease;
+.navbar .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+}
+
+/* Navigation principale */
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 1rem; /* Espacement uniforme entre les éléments */
+}
+
+.navbar-nav .nav-item {
     position: relative;
-    padding-bottom: 1rem !important;  /* Espace pour la barre */
+    height: 100%;
+    display: flex;
+    align-items: center;
 }
 
-.nav-link::after {
+.navbar-nav .nav-link {
+    position: relative;
+    padding: 0.5rem 1rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap; /* Empêche le retour à la ligne */
+}
+
+/* Ajustement pour le dropdown du profil */
+.navbar-nav .dropdown {
+    height: 100%;
+}
+
+.navbar-nav .dropdown-toggle {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* Ligne blanche par défaut pour l'onglet actif */
+.navbar-nav .nav-link.active::after {
     content: '';
     position: absolute;
-    width: 0;
-    height: 3px;  /* Épaisseur de la barre */
     bottom: 0;
     left: 0;
-    background-color: white;
-    transition: width 0.3s ease;
-}
-
-/* Style pour l'onglet actif */
-.nav-link.active {
-    color: white !important;
-}
-
-.nav-link.active::after {
-    width: 100%;  /* Barre complète pour l'onglet actif */
-}
-
-/* Animation au survol seulement pour les onglets non actifs */
-.nav-link:not(.active):hover::after {
     width: 100%;
+    height: 2px;
+    background-color: white;
+    transition: opacity 0.3s ease;
+}
+
+/* Ligne blanche au survol */
+.navbar-nav .nav-link::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: white;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+/* Ajustements pour le menu responsive */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        position: absolute;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: var(--primary-color);
+        padding: 1rem;
+        z-index: 1000;
+    }
+
+    .navbar-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .navbar-nav .nav-item {
+        width: 100%;
+    }
+
+    .navbar-nav .nav-link {
+        padding: 0.75rem 1rem;
+    }
 }
 
 /* Cards */
@@ -218,4 +281,59 @@ body {
 .card-body[onclick]:hover {
     opacity: 0.9;
     transform: scale(1.02);
+}
+
+.profile-image-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-image-container .btn-group {
+    margin-top: 10px;
+}
+
+.profile-image-container img {
+    transition: filter 0.3s;
+}
+
+.profile-image-container:hover img {
+    filter: brightness(0.9);
+}
+
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Styles pour les icônes dans la navbar */
+.navbar-nav .nav-link i {
+    margin-right: 8px;
+    font-size: 1.1em;
+    width: 20px;
+    text-align: center;
+}
+
+.navbar-brand i {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+/* Style pour le menu déroulant */
+.dropdown-item i {
+    margin-right: 8px;
+    width: 20px;
+    text-align: center;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #fee2e2;
+}
+
+/* Style pour l'image de profil dans le header */
+.navbar .profile-image {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 } 
