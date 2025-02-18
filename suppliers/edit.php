@@ -2,54 +2,26 @@
 session_start();
 require_once '../config/database.php';
 
-$page_title = "Modifier un fournisseur";
-require_once '../includes/header.php';
+// Traitement du formulaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $required_fields = ['name', 'contact_name', 'email', 'phone', 'address', 'postal_code', 'city'];
+    $errors = [];
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    $_SESSION['error'] = "ID du fournisseur invalide";
-    header('Location: /suppliers.php');
-    exit;
-}
-
-$supplier_id = $_GET['id'];
-
-try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Validation des données
-        $required_fields = ['name', 'contact_name', 'email', 'phone', 'address', 'postal_code', 'city'];
-        $errors = [];
-
-        foreach ($required_fields as $field) {
-            if (empty($_POST[$field])) {
-                $errors[] = "Le champ " . str_replace('_', ' ', $field) . " est requis.";
-            }
+    // Validation des champs requis
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $errors[] = "Le champ " . str_replace('_', ' ', $field) . " est requis.";
         }
+    }
 
-        if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "L'adresse email n'est pas valide.";
-        }
-
-        // Vérifier si l'email existe déjà (sauf pour ce fournisseur)
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM suppliers WHERE email = ? AND id != ?");
-        $stmt->execute([$_POST['email'], $supplier_id]);
-        if ($stmt->fetchColumn() > 0) {
-            $errors[] = "Cette adresse email est déjà utilisée.";
-        }
-
-        if (empty($errors)) {
-            $stmt = $pdo->prepare("
-                UPDATE suppliers SET 
-                    name = ?,
-                    contact_name = ?,
-                    email = ?,
-                    phone = ?,
-                    address = ?,
-                    postal_code = ?,
-                    city = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ");
-
+    if (empty($errors)) {
+        try {
+            $sql = "UPDATE suppliers 
+                    SET name = ?, contact_name = ?, email = ?, phone = ?, 
+                        address = ?, postal_code = ?, city = ?
+                    WHERE id = ?";
+            
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $_POST['name'],
                 $_POST['contact_name'],
@@ -58,31 +30,45 @@ try {
                 $_POST['address'],
                 $_POST['postal_code'],
                 $_POST['city'],
-                $supplier_id
+                $_POST['id']
             ]);
 
-            $_SESSION['success'] = "Le fournisseur a été modifié avec succès.";
-            header('Location: /suppliers.php');
+            $_SESSION['success'] = "Fournisseur modifié avec succès";
+            header('Location: /suppliers/');
             exit;
-        } else {
-            $_SESSION['error'] = implode("<br>", $errors);
+            
+        } catch (PDOException $e) {
+            $errors[] = "Erreur lors de la modification du fournisseur: " . $e->getMessage();
         }
     }
+}
 
-    // Récupérer les informations du fournisseur
+// Récupération du fournisseur
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    $_SESSION['error'] = "ID de fournisseur invalide";
+    header('Location: /suppliers/');
+    exit;
+}
+
+try {
     $stmt = $pdo->prepare("SELECT * FROM suppliers WHERE id = ?");
-    $stmt->execute([$supplier_id]);
+    $stmt->execute([$_GET['id']]);
     $supplier = $stmt->fetch();
 
     if (!$supplier) {
         $_SESSION['error'] = "Fournisseur non trouvé";
-        header('Location: /suppliers.php');
+        header('Location: /suppliers/');
         exit;
     }
-
 } catch (PDOException $e) {
-    $_SESSION['error'] = "Erreur lors de la modification du fournisseur: " . $e->getMessage();
+    $_SESSION['error'] = "Erreur lors de la récupération du fournisseur: " . $e->getMessage();
+    header('Location: /suppliers/');
+    exit;
 }
+
+// Si on arrive ici, on peut afficher le formulaire
+$page_title = "Modifier un fournisseur";
+require_once '../includes/header.php';
 ?>
 
 <div class="container mt-4">

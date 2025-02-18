@@ -133,14 +133,21 @@ try {
 
 // Fonction pour générer les liens de tri avec conservation des paramètres de recherche
 function getSortLink($field, $current_sort_field, $current_sort_order) {
-    $params = $_GET;
-    $order = ($field === $current_sort_field && $current_sort_order === 'ASC') ? 'DESC' : 'ASC';
+    $params = $_GET;  // Garder tous les paramètres existants
     $params['sort'] = $field;
-    $params['order'] = $order;
+    $params['order'] = ($field === $current_sort_field && $current_sort_order === 'ASC') ? 'DESC' : 'ASC';
+    
+    // S'assurer que la page est définie
+    if (!isset($params['page'])) {
+        $params['page'] = 1;
+    }
+    
     $icon = '';
     if ($field === $current_sort_field) {
         $icon = $current_sort_order === 'ASC' ? ' ↑' : ' ↓';
     }
+    
+    // Construire l'URL avec tous les paramètres
     return '?' . http_build_query($params) . $icon;
 }
 
@@ -148,6 +155,15 @@ function getSortLink($field, $current_sort_field, $current_sort_order) {
 function getPaginationLink($page) {
     $params = $_GET;
     $params['page'] = $page;
+    
+    // Conserver le tri actuel
+    if (!isset($params['sort'])) {
+        $params['sort'] = 'created_at';
+    }
+    if (!isset($params['order'])) {
+        $params['order'] = 'DESC';
+    }
+    
     return '?' . http_build_query($params);
 }
 ?>
