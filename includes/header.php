@@ -53,6 +53,12 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?php echo $current_dir === 'suppliers' ? 'active' : ''; ?>" 
+                           href="/suppliers/">
+                            <i class="fa fa-truck"></i> Fournisseurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link <?php echo ($current_page === 'search.php' && $current_dir === 'vehicles') ? 'active' : ''; ?>" 
                            href="/vehicles/search.php">
                             <i class="fa fa-search"></i> Recherche

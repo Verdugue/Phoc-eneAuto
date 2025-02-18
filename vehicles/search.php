@@ -166,6 +166,11 @@ function getPaginationLink($page) {
 .table-bordered td:last-child, .table-bordered th:last-child {
     border-right: none;
 }
+
+.vehicle-row:hover {
+    background-color: rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease;
+}
 </style>
 
 <div class="container mt-4">
@@ -314,7 +319,8 @@ function getPaginationLink($page) {
                                     </thead>
                                     <tbody>
                                         <?php foreach ($vehicles as $vehicle): ?>
-                                            <tr>
+                                            <tr class="vehicle-row" style="cursor: pointer" 
+                                                onclick="window.location='view.php?id=<?= $vehicle['id'] ?>'">
                                                 <td>
                                                     <img src="<?php echo $vehicle['image_path'] ?? '/assets/images/no-image.jpg'; ?>" 
                                                          class="img-fluid" 
@@ -337,9 +343,6 @@ function getPaginationLink($page) {
                                                                 ($vehicle['status'] === 'reserved' ? 'Réservé' : 'Vendu'); 
                                                             ?>
                                                         </span>
-                                                        <a href="view.php?id=<?php echo $vehicle['id']; ?>" class="btn btn-primary btn-sm">
-                                                            Détails
-                                                        </a>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -410,4 +413,22 @@ function resetForm() {
     document.getElementById('searchForm').reset();
     window.location.href = 'search.php';
 }
-</script> 
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter un effet de survol
+    const rows = document.querySelectorAll('.vehicle-row');
+    rows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'none';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
+
+<?php require_once '../includes/footer.php'; ?> 

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../config/database.php';
+require_once '../includes/init.php';
 
 $page_title = "Nouvelle Transaction";
 require_once '../includes/header.php';
@@ -10,13 +10,16 @@ try {
     $stmt = $pdo->query("SELECT id, first_name, last_name FROM customers WHERE is_active = true ORDER BY last_name, first_name");
     $clients = $stmt->fetchAll();
 
-    // Récupérer la liste des véhicules disponibles
-    $stmt = $pdo->query("SELECT id, brand, model, year, price FROM vehicles WHERE status = 'available' ORDER BY brand, model");
+    // Récupérer la liste des véhicules disponibles uniquement
+    $stmt = $pdo->query("SELECT id, brand, model, year, price 
+                         FROM vehicles 
+                         WHERE status = 'available' 
+                         ORDER BY brand, model");
     $vehicles = $stmt->fetchAll();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validation des données
-        $required_fields = ['customer_id', 'vehicle_id', 'transaction_type', 'price', 'payment_method'];
+        $required_fields = ['customer_id', 'vehicle_id', 'transaction_type', 'price', 'payment_method', 'payment_type'];
         $errors = [];
 
         foreach ($required_fields as $field) {
@@ -32,30 +35,114 @@ try {
                 // Générer le numéro de facture
                 $invoice_number = 'INV-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
+                // Préparer les données de base de la transaction
+                $data = [
+                    'customer_id' => $_POST['customer_id'],
+                    'vehicle_id' => $_POST['vehicle_id'],
+                    'user_id' => $_SESSION['user_id'],
+                    'transaction_type' => $_POST['transaction_type'],
+                    'price' => $_POST['price'],
+                    'payment_method' => $_POST['payment_method'],
+                    'payment_type' => $_POST['payment_type'],
+                    'invoice_number' => $invoice_number,
+                    'notes' => $_POST['notes'] ?? null,
+                    'status' => 'completed'
+                ];
+
+                // Avant d'insérer la transaction, vérifier si le véhicule est disponible
+                if ($data['transaction_type'] === 'sale') {
+                    $stmt = $pdo->prepare("SELECT status FROM vehicles WHERE id = ?");
+                    $stmt->execute([$data['vehicle_id']]);
+                    $vehicle_status = $stmt->fetchColumn();
+
+                    if ($vehicle_status !== 'available') {
+                        throw new Exception("Ce véhicule n'est plus disponible à la vente");
+                    }
+                }
+
+                // Ajouter les champs pour le paiement mensuel si nécessaire
+                if ($_POST['payment_type'] === 'monthly') {
+                    $data['installments'] = $_POST['installments'];
+                    $data['first_payment_date'] = $_POST['first_payment_date'];
+                    
+                    // Calculer le montant restant après l'acompte
+                    $down_payment = floatval($_POST['down_payment']);
+                    $remaining_amount = $data['price'] - $down_payment;
+                }
+
+                // Construire la requête SQL en fonction du type de paiement
+                $sql = "INSERT INTO transactions (
+                    customer_id, vehicle_id, user_id, transaction_type,
+                    price, payment_method, payment_type, invoice_number, notes, status";
+                
+                $values = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+                $params = [
+                    $data['customer_id'], $data['vehicle_id'], $data['user_id'],
+                    $data['transaction_type'], $data['price'], $data['payment_method'],
+                    $data['payment_type'], $data['invoice_number'], $data['notes'],
+                    $data['status']
+                ];
+
+                if ($_POST['payment_type'] === 'monthly') {
+                    $sql .= ", installments, first_payment_date";
+                    $values .= ", ?, ?";
+                    $params[] = $data['installments'];
+                    $params[] = $data['first_payment_date'];
+                }
+
+                $sql .= ") VALUES " . $values . ")";
+
                 // Insérer la transaction
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $transaction_id = $pdo->lastInsertId();
+
+                // Enregistrer l'acompte s'il y en a un
+                if ($down_payment > 0) {
                 $stmt = $pdo->prepare("
-                    INSERT INTO transactions (
-                        customer_id, vehicle_id, user_id, transaction_type,
-                        price, payment_method, invoice_number, notes
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ");
+                        INSERT INTO payments (
+                            transaction_id, amount, payment_date, status, payment_method, 
+                            payment_type
+                        ) VALUES (?, ?, CURRENT_DATE(), 'paid', ?, 'down_payment')
+                    ");
+                    $stmt->execute([
+                        $transaction_id,
+                        $down_payment,
+                        $data['payment_method']
+                    ]);
+                }
 
+                // Créer les mensualités pour le montant restant
+                if ($remaining_amount > 0) {
+                    $monthly_amount = $remaining_amount / $data['installments'];
+                    $payment_date = new DateTime($data['first_payment_date']);
+
+                    for ($i = 0; $i < $data['installments']; $i++) {
+                        $stmt = $pdo->prepare("
+                            INSERT INTO payments (
+                                transaction_id, amount, payment_date, status, payment_method,
+                                payment_type
+                            ) VALUES (?, ?, ?, 'pending', ?, 'installment')
+                        ");
                 $stmt->execute([
-                    $_POST['customer_id'],
-                    $_POST['vehicle_id'],
-                    $_SESSION['user_id'],
-                    $_POST['transaction_type'],
-                    $_POST['price'],
-                    $_POST['payment_method'],
-                    $invoice_number,
-                    $_POST['notes'] ?? null
-                ]);
-
-                $transaction_id = $pdo->lastInsertId(); // Récupérer l'ID de la transaction
+                            $transaction_id,
+                            $monthly_amount,
+                            $payment_date->format('Y-m-d'),
+                            $data['payment_method']
+                        ]);
+                        
+                        $payment_date->modify('+1 month');
+                    }
+                }
 
                 // Mettre à jour le statut du véhicule
+                if ($data['transaction_type'] === 'sale') {
                 $stmt = $pdo->prepare("UPDATE vehicles SET status = 'sold' WHERE id = ?");
-                $stmt->execute([$_POST['vehicle_id']]);
+                    $stmt->execute([$data['vehicle_id']]);
+                } else if ($data['transaction_type'] === 'purchase') {
+                    $stmt = $pdo->prepare("UPDATE vehicles SET status = 'available' WHERE id = ?");
+                    $stmt->execute([$data['vehicle_id']]);
+                }
 
                 // Gérer l'upload des documents
                 if (!empty($_FILES['documents']['name'][0])) {
@@ -90,19 +177,19 @@ try {
                     }
                 }
 
-                if ($pdo->commit()) {
+                $pdo->commit();
                     $_SESSION['success'] = "Transaction enregistrée avec succès";
-                    header('Location: /transactions/');  // Retour à la liste des transactions
+                header('Location: /transactions/');
                     exit;
-                }
+
             } catch (Exception $e) {
                 $pdo->rollBack();
-                throw $e;
+                $errors[] = "Erreur lors de l'enregistrement : " . $e->getMessage();
             }
         }
     }
-} catch (PDOException $e) {
-    $_SESSION['error'] = "Erreur lors de l'ajout de la transaction: " . $e->getMessage();
+} catch (Exception $e) {
+    $errors[] = "Erreur : " . $e->getMessage();
 }
 ?>
 
@@ -113,20 +200,32 @@ try {
         </a>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h3>Nouvelle Transaction</h3>
+    <?php if (!empty($errors)): ?>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <?php foreach ($errors as $error): ?>
+                    <li><?php echo htmlspecialchars($error); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Nouvelle Transaction</h3>
         </div>
         <div class="card-body">
             <form method="POST" enctype="multipart/form-data">
-                <div class="row">
+                <!-- Informations principales -->
+                <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="customer_id" class="form-label">Client *</label>
-                            <select class="form-control" id="customer_id" name="customer_id" required>
-                                <option value="">Sélectionnez un client</option>
+                            <select class="form-select select2" id="customer_id" name="customer_id" required>
+                                <option value="">Rechercher un client...</option>
                                 <?php foreach ($clients as $client): ?>
-                                    <option value="<?php echo $client['id']; ?>">
+                                    <option value="<?php echo $client['id']; ?>" 
+                                            data-search="<?php echo htmlspecialchars($client['first_name'] . ' ' . $client['last_name']); ?>">
                                         <?php echo htmlspecialchars($client['last_name'] . ' ' . $client['first_name']); ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -136,11 +235,14 @@ try {
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="vehicle_id" class="form-label">Véhicule *</label>
-                            <select class="form-control" id="vehicle_id" name="vehicle_id" required>
-                                <option value="">Sélectionnez un véhicule</option>
+                            <select class="form-select select2" id="vehicle_id" name="vehicle_id" required>
+                                <option value="">Rechercher un véhicule...</option>
                                 <?php foreach ($vehicles as $vehicle): ?>
-                                    <option value="<?php echo $vehicle['id']; ?>" data-price="<?php echo $vehicle['price']; ?>">
-                                        <?php echo htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model'] . ' (' . $vehicle['year'] . ')'); ?>
+                                    <option value="<?php echo $vehicle['id']; ?>" 
+                                            data-price="<?php echo $vehicle['price']; ?>"
+                                            data-search="<?php echo htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']); ?>">
+                                        <?php echo htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model'] . 
+                                              ' (' . number_format($vehicle['price'], 2, ',', ' ') . ' €)'); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -148,11 +250,12 @@ try {
                     </div>
                 </div>
 
-                <div class="row">
+                <!-- Type de transaction et prix -->
+                <div class="row mb-4">
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="transaction_type" class="form-label">Type de transaction *</label>
-                            <select class="form-control" id="transaction_type" name="transaction_type" required>
+                            <select class="form-select" name="transaction_type" required>
                                 <option value="sale">Vente</option>
                                 <option value="purchase">Achat</option>
                             </select>
@@ -161,280 +264,308 @@ try {
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="price" class="form-label">Prix *</label>
+                            <div class="input-group">
                             <input type="number" class="form-control" id="price" name="price" step="0.01" required>
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options de paiement -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Détails du paiement</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payment_type" class="form-label">Type de paiement *</label>
+                                    <select class="form-select" name="payment_type" id="payment_type" required>
+                                        <option value="full">Paiement comptant</option>
+                                        <option value="monthly">Paiement mensuel</option>
+                                    </select>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
                             <label for="payment_method" class="form-label">Méthode de paiement *</label>
-                            <select class="form-control" id="payment_method" name="payment_method" required>
+                                    <select class="form-select" name="payment_method" required>
                                 <option value="card">Carte bancaire</option>
                                 <option value="cash">Espèces</option>
                                 <option value="transfer">Virement</option>
                                 <option value="check">Chèque</option>
                             </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="down_payment" class="form-label">Acompte versé</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="down_payment" name="down_payment" 
+                                               step="0.01" value="0" min="0">
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options de paiement mensuel -->
+                        <div id="monthly_options" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="installments" class="form-label">Nombre de mensualités</label>
+                                        <select class="form-select" name="installments" id="installments">
+                                            <?php for($i = 2; $i <= 24; $i++): ?>
+                                                <option value="<?= $i ?>"><?= $i ?> mois</option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="first_payment_date" class="form-label">Date du premier paiement</label>
+                                        <input type="date" class="form-control" name="first_payment_date" id="first_payment_date">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>Résumé du paiement</h6>
+                                    <div id="payment_summary">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <p>Prix total: <span id="total_price">0.00</span> €</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p>Acompte versé: <span id="down_payment_display">0.00</span> €</p>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <p>Reste à payer: <span id="remaining_amount">0.00</span> €</p>
+                                            </div>
+                                        </div>
+                                        <p>Mensualité: <span id="monthly_amount">0.00</span> €</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
+                <!-- Notes -->
+                <div class="mb-4">
                     <label for="notes" class="form-label">Notes</label>
                     <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="mb-0">Documents</h5>
+                <!-- Documents -->
+                <div class="mb-4">
+                    <label class="form-label">Documents</label>
+                    <div id="document_container">
+                        <div class="document-row mb-2">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="file" name="documents[]" class="form-control">
                             </div>
-                            <div class="card-body">
-                                <div class="dropzone-container p-4 border rounded text-center" 
-                                     id="dropzone" 
-                                     ondrop="handleDrop(event)" 
-                                     ondragover="handleDragOver(event)"
-                                     ondragleave="handleDragLeave(event)">
-                                    <i class="fa fa-file-pdf-o fa-2x mb-2 text-muted"></i>
-                                    <p class="mb-2">Glissez et déposez vos documents ici</p>
-                                    <p class="text-muted small mb-2">ou</p>
-                                    <label class="btn btn-outline-primary mb-0">
-                                        <input type="file" name="documents[]" id="fileInput" multiple accept=".pdf,.doc,.docx" style="display: none;" onchange="handleFiles(this.files)">
-                                        Parcourir
-                                    </label>
-                                    <p class="text-muted small mt-2">PDF, Word (max 10 Mo)</p>
+                                <div class="col-md-6">
+                                    <select name="document_types[]" class="form-select">
+                                        <option value="invoice">Facture</option>
+                                        <option value="contract">Contrat</option>
+                                        <option value="registration">Carte grise</option>
+                                        <option value="insurance">Assurance</option>
+                                        <option value="other">Autre</option>
+                                    </select>
                                 </div>
-                                <div id="preview" class="mt-3"></div>
                             </div>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addDocumentRow()">
+                        <i class="fa fa-plus"></i> Ajouter un document
+                    </button>
                 </div>
 
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary">Enregistrer la transaction</button>
-                    <a href="/transactions/" class="btn btn-secondary">Annuler</a>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save me-2"></i>Enregistrer la transaction
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<style>
-/* Style général du formulaire */
-.form-control, .form-select {
-    border-radius: 8px;
-    padding: 0.75rem;
-    border: 1px solid #dee2e6;
-    transition: all 0.3s ease;
-}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
-.form-control:focus, .form-select:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: #495057;
-}
-
-/* Style de la zone de dépôt */
-.dropzone-container {
-    border: 2px dashed #dee2e6 !important;
-    transition: all 0.3s ease;
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    background-color: #f8f9fa;
-}
-
-.dropzone-container:hover {
-    border-color: #0d6efd !important;
-    background-color: #f1f4ff;
-}
-
-.dropzone-container.dragover {
-    border-color: #0d6efd !important;
-    background-color: #f1f4ff;
-    transform: scale(1.01);
-}
-
-/* Style des prévisualisations de documents */
-.document-preview {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    background-color: white;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.document-preview:hover {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transform: translateY(-1px);
-}
-
-.document-preview .fa {
-    margin-right: 12px;
-    color: #0d6efd;
-}
-
-.document-preview .remove-file {
-    margin-left: auto;
-    cursor: pointer;
-    color: #dc3545;
-    opacity: 0.7;
-    transition: all 0.2s ease;
-    padding: 5px;
-}
-
-.document-preview .remove-file:hover {
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-/* Style des cartes */
-.card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem 1.25rem;
-    border-radius: 12px 12px 0 0 !important;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-/* Style des boutons */
-.btn {
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background: linear-gradient(45deg, #0d6efd, #0b5ed7);
-    border: none;
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
-}
-
-.btn-outline-primary {
-    border: 2px solid #0d6efd;
-}
-
-.btn-outline-primary:hover {
-    background: linear-gradient(45deg, #0d6efd, #0b5ed7);
-}
-
-/* Animation pour les messages d'erreur */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
-.is-invalid {
-    animation: shake 0.4s ease-in-out;
-}
-
-/* Style responsive */
-@media (max-width: 768px) {
-    .card-body {
-        padding: 1rem;
-    }
-    
-    .dropzone-container {
-        min-height: 150px;
-    }
-}
-
-.document-preview select {
-    margin: 0 10px;
-    max-width: 200px;
-}
-</style>
-
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-function handleDrop(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    
-    handleFiles(files);
-    document.getElementById('dropzone').classList.remove('dragover');
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentType = document.getElementById('payment_type');
+    const monthlyOptions = document.getElementById('monthly_options');
+    const priceInput = document.getElementById('price');
+    const installmentsSelect = document.getElementById('installments');
+    const downPaymentInput = document.getElementById('down_payment');
+    const totalPriceSpan = document.getElementById('total_price');
+    const monthlyAmountSpan = document.getElementById('monthly_amount');
+    const downPaymentDisplay = document.getElementById('down_payment_display');
+    const remainingAmountSpan = document.getElementById('remaining_amount');
+    const vehicleSelect = document.getElementById('vehicle_id');
 
-function handleDragOver(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    document.getElementById('dropzone').classList.add('dragover');
-}
+    // Définir la date minimale pour le premier paiement
+    const firstPaymentDate = document.getElementById('first_payment_date');
+    const today = new Date();
+    firstPaymentDate.min = today.toISOString().split('T')[0];
+    firstPaymentDate.value = today.toISOString().split('T')[0];
 
-function handleDragLeave(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    document.getElementById('dropzone').classList.remove('dragover');
-}
-
-function handleFiles(files) {
-    const preview = document.getElementById('preview');
-    const maxSize = 10 * 1024 * 1024; // 10 Mo
-
-    Array.from(files).forEach((file, index) => {
-        if (file.size > maxSize) {
-            alert(`Le fichier ${file.name} est trop volumineux. Taille maximum : 10 Mo`);
-            return;
+    // Configuration commune pour Select2
+    const select2Config = {
+        theme: 'bootstrap-5',
+        width: '100%',
+        minimumInputLength: 0, // Permettre l'affichage de tous les éléments au début
+        dropdownParent: $('body'), // Assurer que le dropdown s'affiche correctement
+        language: {
+            noResults: function() {
+                return "Aucun résultat trouvé";
+            },
+            searching: function() {
+                return "Recherche...";
+            }
         }
+    };
 
-        const div = document.createElement('div');
-        div.className = 'document-preview';
-        
-        div.innerHTML = `
-            <i class="fa fa-file-pdf-o"></i>
-            <span>${file.name}</span>
-            <select name="document_types[]" class="form-select form-select-sm mx-2" style="width: auto;" required>
-                <option value="">Type de document</option>
-                <option value="facture">Facture</option>
-                <option value="carte_grise">Carte grise</option>
-                <option value="controle_technique">Contrôle technique</option>
-                <option value="assurance">Assurance</option>
-                <option value="autre">Autre</option>
-            </select>
-            <i class="fa fa-times remove-file" onclick="this.parentElement.remove()"></i>
-        `;
-        
-        preview.appendChild(div);
+    // Configuration pour les véhicules
+    $('#vehicle_id').select2({
+        ...select2Config,
+        placeholder: 'Rechercher un véhicule...',
+        allowClear: true,
+        templateResult: function(vehicle) {
+            if (!vehicle.id) return vehicle.text;
+            return $(`<span>${vehicle.text}</span>`);
+        },
+        matcher: function(params, data) {
+            // Afficher tous les éléments si pas de recherche
+            if (!params.term) {
+                return data;
+            }
+
+            const searchText = params.term.toLowerCase();
+            const vehicle = $(data.element);
+            const searchStr = (
+                vehicle.data('search') + ' ' + // Marque et modèle
+                data.text.toLowerCase() // Texte affiché (inclut le prix)
+            );
+
+            // Retourner l'élément si le texte correspond
+            if (searchStr.toLowerCase().includes(searchText)) {
+                return data;
+            }
+
+            // Sinon ne pas l'afficher
+            return null;
+        }
     });
-}
-</script>
 
-<script>
-// Auto-remplir le prix quand un véhicule est sélectionné
-document.getElementById('vehicle_id').addEventListener('change', function() {
-    const selectedOption = this.options[this.selectedIndex];
-    if (selectedOption.value) {
-        document.getElementById('price').value = selectedOption.dataset.price;
+    // Configuration pour les clients
+    $('#customer_id').select2({
+        ...select2Config,
+        placeholder: 'Rechercher un client...',
+        allowClear: true,
+        templateResult: function(client) {
+            if (!client.id) return client.text;
+            return $(`<span>${client.text}</span>`);
+        },
+        matcher: function(params, data) {
+            // Afficher tous les éléments si pas de recherche
+            if (!params.term) {
+                return data;
+            }
+
+            const searchText = params.term.toLowerCase();
+            const searchStr = (
+                $(data.element).data('search') + ' ' + // Prénom et nom
+                data.text.toLowerCase() // Texte affiché
+            );
+
+            // Retourner l'élément si le texte correspond
+            if (searchStr.toLowerCase().includes(searchText)) {
+                return data;
+            }
+
+            // Sinon ne pas l'afficher
+            return null;
+        }
+    });
+
+    // Mettre à jour le prix quand un véhicule est sélectionné
+    $('#vehicle_id').on('select2:select', function(e) {
+        const selectedOption = $(this).find('option:selected');
+        if (selectedOption.data('price')) {
+            $('#price').val(selectedOption.data('price'));
+            updatePaymentSummary();
+        }
+    });
+
+    // Afficher/masquer les options de paiement mensuel
+    paymentType.addEventListener('change', function() {
+        monthlyOptions.style.display = this.value === 'monthly' ? 'block' : 'none';
+        updatePaymentSummary();
+    });
+
+    // Mettre à jour le résumé du paiement
+    function updatePaymentSummary() {
+        if (paymentType.value === 'monthly') {
+            const price = parseFloat(priceInput.value) || 0;
+            const downPayment = parseFloat(downPaymentInput.value) || 0;
+            const remainingAmount = price - downPayment;
+            const installments = parseInt(installmentsSelect.value) || 1;
+            const monthlyAmount = remainingAmount / installments;
+
+            totalPriceSpan.textContent = price.toFixed(2);
+            downPaymentDisplay.textContent = downPayment.toFixed(2);
+            remainingAmountSpan.textContent = remainingAmount.toFixed(2);
+            monthlyAmountSpan.textContent = monthlyAmount.toFixed(2);
+
+            // Désactiver la validation si l'acompte est supérieur au prix total
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (downPayment > price) {
+                submitButton.disabled = true;
+                alert("L'acompte ne peut pas être supérieur au prix total");
+            } else {
+                submitButton.disabled = false;
+            }
+        }
     }
+
+    priceInput.addEventListener('input', updatePaymentSummary);
+    downPaymentInput.addEventListener('input', updatePaymentSummary);
+    installmentsSelect.addEventListener('change', updatePaymentSummary);
 });
+
+function addDocumentRow() {
+    const container = document.getElementById('document_container');
+    const newRow = document.createElement('div');
+    newRow.className = 'document-row mb-2';
+    newRow.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <input type="file" name="documents[]" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <select name="document_types[]" class="form-select">
+                    <option value="invoice">Facture</option>
+                    <option value="contract">Contrat</option>
+                    <option value="registration">Carte grise</option>
+                    <option value="insurance">Assurance</option>
+                    <option value="other">Autre</option>
+                </select>
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+}
 </script>
 
 <?php require_once '../includes/footer.php'; ?> 

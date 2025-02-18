@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../config/database.php';
+require_once '../includes/init.php';  // Ceci inclura database.php
 
 $page_title = "Détails de la Transaction";
 require_once '../includes/header.php';
@@ -13,20 +13,21 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 try {
     // Récupérer les détails de la transaction
-    $stmt = $pdo->prepare("
-        SELECT 
-            t.*,
-            v.brand, v.model, v.year, v.registration_number,
-            c.first_name, c.last_name, c.email, c.phone,
-            u.username as vendeur
-        FROM transactions t
-        JOIN vehicles v ON t.vehicle_id = v.id
-        JOIN customers c ON t.customer_id = c.id
-        JOIN users u ON t.user_id = u.id
-        WHERE t.id = ?
-    ");
-    $stmt->execute([$_GET['id']]);
-    $transaction = $stmt->fetch();
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+    $sql = "SELECT t.*, 
+            c.first_name as customer_first_name, 
+            c.last_name as customer_last_name,
+            v.brand as vehicle_brand, 
+            v.model as vehicle_model,
+            u.username as user_name
+            FROM transactions t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            LEFT JOIN vehicles v ON t.vehicle_id = v.id
+            LEFT JOIN users u ON t.user_id = u.id
+            WHERE t.id = ?";
+    
+    $transaction = fetchOne($sql, [$id]);
 
     if (!$transaction) {
         $_SESSION['error'] = "Transaction non trouvée";
@@ -51,7 +52,7 @@ try {
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
                     <h3 class="mb-0">
                         <i class="fa fa-file-text-o me-2"></i>
-                        Transaction #<?php echo $transaction['invoice_number']; ?>
+                        Transaction #<?php echo $transaction['id']; ?>
                     </h3>
                     <a href="print_invoice.php?id=<?php echo $transaction['id']; ?>" 
                        class="btn btn-light" target="_blank">
@@ -112,7 +113,7 @@ try {
                                     <table class="table table-borderless mb-0">
                                         <tr>
                                             <th class="ps-0 text-muted">Nom</th>
-                                            <td class="text-end pe-0"><?php echo htmlspecialchars(($transaction['first_name'] ?? '') . ' ' . ($transaction['last_name'] ?? '')); ?></td>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars(($transaction['customer_first_name'] ?? '') . ' ' . ($transaction['customer_last_name'] ?? '')); ?></td>
                                         </tr>
                                         <tr>
                                             <th class="ps-0 text-muted">Email</th>
@@ -135,7 +136,7 @@ try {
                                     <table class="table table-borderless mb-0">
                                         <tr>
                                             <th class="ps-0 text-muted">Marque/Modèle</th>
-                                            <td class="text-end pe-0"><?php echo htmlspecialchars(($transaction['brand'] ?? '') . ' ' . ($transaction['model'] ?? '')); ?></td>
+                                            <td class="text-end pe-0"><?php echo htmlspecialchars(($transaction['vehicle_brand'] ?? '') . ' ' . ($transaction['vehicle_model'] ?? '')); ?></td>
                                         </tr>
                                         <tr>
                                             <th class="ps-0 text-muted">Année</th>
@@ -158,6 +159,123 @@ try {
                             </div>
                             <div class="card-body">
                                 <p class="mb-0"><?php echo nl2br(htmlspecialchars($transaction['notes'])); ?></p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Après les informations existantes, ajoutons une section pour les paiements -->
+                    <?php if ($transaction['payment_type'] === 'monthly'): ?>
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">
+                                    <i class="fa fa-money me-2 text-primary"></i>Plan de paiement
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <?php
+                                // Récupérer tous les paiements
+                                $sql = "SELECT * FROM payments WHERE transaction_id = ? ORDER BY payment_date ASC";
+                                $payments = fetchAll($sql, [$transaction['id']]);
+                                
+                                // Calculer les totaux
+                                $total_amount = $transaction['price'];
+                                $paid_amount = array_sum(array_column(
+                                    array_filter($payments, fn($p) => $p['status'] === 'paid'),
+                                    'amount'
+                                ));
+                                $remaining_amount = $total_amount - $paid_amount;
+                                
+                                // Séparer les acomptes des mensualités
+                                $down_payments = array_filter($payments, fn($p) => $p['payment_type'] === 'down_payment');
+                                $installment_payments = array_filter($payments, fn($p) => $p['payment_type'] === 'installment');
+                                
+                                // Calculer la mensualité (uniquement sur les paiements de type 'installment')
+                                $monthly_amount = !empty($installment_payments) ? reset($installment_payments)['amount'] : 0;
+                                ?>
+                                
+                                <div class="row mb-4">
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h6 class="text-muted">Montant total</h6>
+                                                <h4><?= number_format($total_amount, 2, ',', ' ') ?> €</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h6 class="text-muted">Déjà payé</h6>
+                                                <h4><?= number_format($paid_amount, 2, ',', ' ') ?> €</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h6 class="text-muted">Reste à payer</h6>
+                                                <h4><?= number_format($remaining_amount, 2, ',', ' ') ?> €</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php if ($remaining_amount > 0): ?>
+                                        <div class="col-md-3">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6 class="text-muted">Mensualité</h6>
+                                                    <h4><?= number_format($monthly_amount, 2, ',', ' ') ?> €</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if ($remaining_amount > 0): ?>
+                                    <!-- Tableau des échéances -->
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Date</th>
+                                                <th>Montant</th>
+                                                <th>Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php 
+                                            // Afficher d'abord les acomptes
+                                            foreach ($down_payments as $payment): ?>
+                                                <tr>
+                                                    <td>Acompte</td>
+                                                    <td><?= date('d/m/Y', strtotime($payment['payment_date'])) ?></td>
+                                                    <td><?= number_format($payment['amount'], 2, ',', ' ') ?> €</td>
+                                                    <td>
+                                                        <span class="badge bg-<?= $payment['status'] === 'paid' ? 'success' : 'warning' ?>">
+                                                            <?= $payment['status'] === 'paid' ? 'Payé' : 'En attente' ?>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+
+                                            <?php 
+                                            // Puis afficher les mensualités
+                                            $mensualite_num = 1;
+                                            foreach ($installment_payments as $payment): ?>
+                                                <tr>
+                                                    <td>Mensualité <?= $mensualite_num ?></td>
+                                                    <td><?= date('d/m/Y', strtotime($payment['payment_date'])) ?></td>
+                                                    <td><?= number_format($payment['amount'], 2, ',', ' ') ?> €</td>
+                                                    <td>
+                                                        <span class="badge bg-<?= $payment['status'] === 'paid' ? 'success' : 'warning' ?>">
+                                                            <?= $payment['status'] === 'paid' ? 'Payé' : 'En attente' ?>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <?php $mensualite_num++; ?>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>

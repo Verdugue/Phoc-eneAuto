@@ -2,40 +2,24 @@
 session_start();
 require_once '../config/database.php';
 
-$page_title = "Ajouter un fournisseur";
-require_once '../includes/header.php';
-
+// Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        // Validation des données
-        $required_fields = ['name', 'contact_name', 'email', 'phone', 'address', 'postal_code', 'city'];
-        $errors = [];
+    $required_fields = ['name', 'contact_name', 'email', 'phone', 'address', 'postal_code', 'city'];
+    $errors = [];
 
-        foreach ($required_fields as $field) {
-            if (empty($_POST[$field])) {
-                $errors[] = "Le champ " . str_replace('_', ' ', $field) . " est requis.";
-            }
+    // Validation des champs requis
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $errors[] = "Le champ " . str_replace('_', ' ', $field) . " est requis.";
         }
+    }
 
-        if (!empty($_POST['email']) && !filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "L'adresse email n'est pas valide.";
-        }
-
-        // Vérifier si l'email existe déjà
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM suppliers WHERE email = ?");
-        $stmt->execute([$_POST['email']]);
-        if ($stmt->fetchColumn() > 0) {
-            $errors[] = "Cette adresse email est déjà utilisée.";
-        }
-
-        if (empty($errors)) {
-            $stmt = $pdo->prepare("
-                INSERT INTO suppliers (
-                    name, contact_name, email, phone, 
-                    address, postal_code, city
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            ");
-
+    if (empty($errors)) {
+        try {
+            $sql = "INSERT INTO suppliers (name, contact_name, email, phone, address, postal_code, city) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $_POST['name'],
                 $_POST['contact_name'],
@@ -46,16 +30,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['city']
             ]);
 
-            $_SESSION['success'] = "Le fournisseur a été ajouté avec succès.";
-            header('Location: /suppliers.php');
+            $_SESSION['success'] = "Fournisseur ajouté avec succès";
+            header('Location: /suppliers/');
             exit;
-        } else {
-            $_SESSION['error'] = implode("<br>", $errors);
+            
+        } catch (PDOException $e) {
+            $errors[] = "Erreur lors de l'ajout du fournisseur: " . $e->getMessage();
         }
-    } catch (PDOException $e) {
-        $_SESSION['error'] = "Erreur lors de l'ajout du fournisseur: " . $e->getMessage();
     }
 }
+
+// Si on arrive ici, c'est qu'on affiche le formulaire
+$page_title = "Ajouter un fournisseur";
+require_once '../includes/header.php';
 ?>
 
 <div class="container mt-4">

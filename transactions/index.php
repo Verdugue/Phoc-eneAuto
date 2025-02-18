@@ -23,34 +23,63 @@ if (!in_array($sort_field, $allowed_sort_fields)) {
 // Valider l'ordre de tri
 $sort_order = strtoupper($sort_order) === 'ASC' ? 'ASC' : 'DESC';
 
-try {
-    // Compter le nombre total de transactions
-    $total_items = $pdo->query("SELECT COUNT(*) FROM transactions")->fetchColumn();
-    $total_pages = ceil($total_items / $items_per_page);
+// Paramètres de recherche
+$search = [
+    'date_start' => $_GET['date_start'] ?? '',
+    'date_end' => $_GET['date_end'] ?? '',
+    'customer' => $_GET['customer'] ?? '',
+    'vehicle' => $_GET['vehicle'] ?? '',
+    'transaction_type' => $_GET['transaction_type'] ?? ''
+];
 
-    // Requête avec tri et concaténation des noms
-    $stmt = $pdo->prepare("
-        SELECT 
-            t.*,
-            v.brand, 
-            v.model,
-            CONCAT(v.brand, ' ', v.model) as vehicle_info,
-            c.first_name, 
-            c.last_name,
-            CONCAT(c.first_name, ' ', c.last_name) as client_name,
-            u.username as vendeur
-        FROM transactions t
-        JOIN vehicles v ON t.vehicle_id = v.id
-        JOIN customers c ON t.customer_id = c.id
-        JOIN users u ON t.user_id = u.id
-        ORDER BY t.{$sort_field} {$sort_order}
-        LIMIT :limit OFFSET :offset
-    ");
+try {
+    // Construction de la requête avec les filtres
+    $sql = "SELECT t.*, 
+            c.first_name as customer_first_name, 
+            c.last_name as customer_last_name,
+            v.brand as vehicle_brand, 
+            v.model as vehicle_model,
+            u.username as user_name
+            FROM transactions t
+            LEFT JOIN customers c ON t.customer_id = c.id
+            LEFT JOIN vehicles v ON t.vehicle_id = v.id
+            LEFT JOIN users u ON t.user_id = u.id
+            WHERE 1=1";
     
-    $stmt->bindValue(':limit', $items_per_page, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    $stmt->execute();
+    $params = [];
+
+    // Ajouter les conditions de recherche
+    if (!empty($search['date_start'])) {
+        $sql .= " AND DATE(t.transaction_date) >= ?";
+        $params[] = $search['date_start'];
+    }
+    if (!empty($search['date_end'])) {
+        $sql .= " AND DATE(t.transaction_date) <= ?";
+        $params[] = $search['date_end'];
+    }
+    if (!empty($search['customer'])) {
+        $sql .= " AND (LOWER(c.first_name) LIKE ? OR LOWER(c.last_name) LIKE ?)";
+        $searchTerm = '%' . strtolower($search['customer']) . '%';
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+    }
+    if (!empty($search['vehicle'])) {
+        $sql .= " AND (LOWER(v.brand) LIKE ? OR LOWER(v.model) LIKE ?)";
+        $searchTerm = '%' . strtolower($search['vehicle']) . '%';
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+    }
+    if (!empty($search['transaction_type'])) {
+        $sql .= " AND t.transaction_type = ?";
+        $params[] = $search['transaction_type'];
+    }
+
+    $sql .= " ORDER BY t.transaction_date DESC";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $transactions = $stmt->fetchAll();
+
 } catch (PDOException $e) {
     $_SESSION['error'] = "Erreur lors de la récupération des transactions: " . $e->getMessage();
 }
@@ -66,103 +95,103 @@ function getSortLink($field, $current_sort_field, $current_sort_order) {
 }
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Gestion des Transactions</h1>
-    <a href="add.php" class="btn btn-primary">
-        <i class="fa fa-plus"></i> Nouvelle Transaction
-    </a>
-</div>
+<div class="container mt-4">
+    <!-- Formulaire de recherche -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Rechercher des transactions</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Période</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" name="date_start" value="<?= htmlspecialchars($search['date_start']) ?>">
+                        <span class="input-group-text">au</span>
+                        <input type="date" class="form-control" name="date_end" value="<?= htmlspecialchars($search['date_end']) ?>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Client</label>
+                    <input type="text" class="form-control" name="customer" placeholder="Nom du client" 
+                           value="<?= htmlspecialchars($search['customer']) ?>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Véhicule</label>
+                    <input type="text" class="form-control" name="vehicle" placeholder="Marque ou modèle"
+                           value="<?= htmlspecialchars($search['vehicle']) ?>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="transaction_type">
+                        <option value="">Tous</option>
+                        <option value="sale" <?= $search['transaction_type'] === 'sale' ? 'selected' : '' ?>>Vente</option>
+                        <option value="purchase" <?= $search['transaction_type'] === 'purchase' ? 'selected' : '' ?>>Achat</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-search me-2"></i>Rechercher
+                    </button>
+                    <a href="/transactions/" class="btn btn-outline-secondary">
+                        <i class="fa fa-times me-2"></i>Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-container">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Client</th>
-                        <th>Véhicule</th>
-                        <th>Type</th>
-                        <th>Montant</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($transactions as $transaction): ?>
-                        <tr onclick="window.location='/transactions/view.php?id=<?php echo $transaction['id']; ?>'" 
-                            style="cursor: pointer;">
-                            <td><?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></td>
-                            <td><?php echo htmlspecialchars($transaction['client_name']); ?></td>
-                            <td><?php echo htmlspecialchars($transaction['vehicle_info']); ?></td>
-                            <td>
-                                <span class="badge bg-<?php echo $transaction['transaction_type'] === 'sale' ? 'success' : 'info'; ?>">
-                                    <?php echo $transaction['transaction_type'] === 'sale' ? 'Vente' : 'Achat'; ?>
-                                </span>
-                            </td>
-                            <td><?php echo number_format($transaction['price'], 2, ',', ' ') . ' €'; ?></td>
-                            <td>
-                                <span class="badge bg-<?php 
-                                    echo isset($transaction['status']) && $transaction['status'] === 'completed' ? 'success' : 
-                                        (isset($transaction['status']) && $transaction['status'] === 'cancelled' ? 'danger' : 'warning'); 
-                                ?>">
-                                    <?php 
-                                    echo isset($transaction['status']) ? 
-                                        ($transaction['status'] === 'completed' ? 'Terminée' : 
-                                         ($transaction['status'] === 'cancelled' ? 'Annulée' : 'En cours')) 
-                                        : 'En cours'; 
-                                    ?>
-                                </span>
-                            </td>
+    <!-- Liste des transactions -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Transactions</h4>
+            <a href="/transactions/add.php" class="btn btn-light">
+                <i class="fa fa-plus me-2"></i>Nouvelle transaction
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>N° Facture</th>
+                            <th>Client</th>
+                            <th>Véhicule</th>
+                            <th>Type</th>
+                            <th>Montant</th>
+                            <th>Paiement</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($transactions as $transaction): ?>
+                            <tr onclick="window.location='/transactions/view.php?id=<?= $transaction['id'] ?>'" 
+                                style="cursor: pointer">
+                                <td><?= date('d/m/Y', strtotime($transaction['transaction_date'])) ?></td>
+                                <td><?= htmlspecialchars($transaction['invoice_number']) ?></td>
+                                <td><?= htmlspecialchars($transaction['customer_first_name'] . ' ' . $transaction['customer_last_name']) ?></td>
+                                <td><?= htmlspecialchars($transaction['vehicle_brand'] . ' ' . $transaction['vehicle_model']) ?></td>
+                                <td>
+                                    <span class="badge bg-<?= $transaction['transaction_type'] === 'sale' ? 'success' : 'info' ?>">
+                                        <?= $transaction['transaction_type'] === 'sale' ? 'Vente' : 'Achat' ?>
+                                    </span>
+                                </td>
+                                <td><?= number_format($transaction['price'], 2, ',', ' ') ?> €</td>
+                                <td><?= $transaction['payment_type'] === 'monthly' ? 'Mensuel' : 'Comptant' ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<?php if ($total_pages > 1): ?>
-    <nav aria-label="Navigation des pages" class="mt-4">
-        <ul class="pagination justify-content-center">
-            <li class="page-item <?php echo $current_page <= 1 ? 'disabled' : ''; ?>">
-                <a class="page-link" href="<?php echo getSortLink($sort_field, $sort_field, $sort_order); ?>&page=<?php echo $current_page - 1; ?>">Précédent</a>
-            </li>
-            
-            <?php
-            $start_page = max(1, $current_page - 2);
-            $end_page = min($total_pages, $current_page + 2);
-
-            if ($start_page > 1) {
-                echo '<li class="page-item"><a class="page-link" href="' . getSortLink($sort_field, $sort_field, $sort_order) . '&page=1">1</a></li>';
-                if ($start_page > 2) {
-                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                }
-            }
-
-            for ($i = $start_page; $i <= $end_page; $i++) {
-                echo '<li class="page-item ' . ($i == $current_page ? 'active' : '') . '">';
-                echo '<a class="page-link" href="' . getSortLink($sort_field, $sort_field, $sort_order) . '&page=' . $i . '">' . $i . '</a>';
-                echo '</li>';
-            }
-
-            if ($end_page < $total_pages) {
-                if ($end_page < $total_pages - 1) {
-                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
-                }
-                echo '<li class="page-item"><a class="page-link" href="' . getSortLink($sort_field, $sort_field, $sort_order) . '&page=' . $total_pages . '">' . $total_pages . '</a></li>';
-            }
-            ?>
-
-            <li class="page-item <?php echo $current_page >= $total_pages ? 'disabled' : ''; ?>">
-                <a class="page-link" href="<?php echo getSortLink($sort_field, $sort_field, $sort_order); ?>&page=<?php echo $current_page + 1; ?>">Suivant</a>
-            </li>
-        </ul>
-    </nav>
-
-    <div class="text-center text-muted">
-        Page <?php echo $current_page; ?> sur <?php echo $total_pages; ?> 
-        (<?php echo $total_items; ?> transactions au total)
-    </div>
-<?php endif; ?>
+<style>
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.075);
+    transition: background-color 0.2s ease;
+}
+</style>
 
 <?php require_once '../includes/footer.php'; ?> 
