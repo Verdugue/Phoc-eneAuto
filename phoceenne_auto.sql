@@ -389,3 +389,29 @@ CREATE TABLE IF NOT EXISTS `payments` (
 
 -- Garder uniquement la mise à jour des données existantes
 UPDATE `transactions` SET `payment_type` = 'full' WHERE `payment_type` IS NULL;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `parking_spots`
+--
+
+DROP TABLE IF EXISTS `parking_spots`;
+CREATE TABLE IF NOT EXISTS `parking_spots` (
+    `id` INT PRIMARY KEY AUTO_INCREMENT,
+    `spot_number` INT NOT NULL,
+    `vehicle_id` INT NULL,
+    `coordinates` VARCHAR(20) NOT NULL, -- Format "x,y"
+    FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`),
+    UNIQUE KEY `unique_spot` (`spot_number`)
+);
+
+-- Mettre à jour les places de parking pour refléter la disposition réelle
+TRUNCATE TABLE parking_spots;
+INSERT INTO parking_spots (spot_number, coordinates) VALUES 
+-- Places de gauche
+(1, '0,0'), (2, '0,1'), (3, '0,2'), (4, '0,3'),
+-- Places de droite
+(5, '1,0'), (6, '1,1'), (7, '1,2'), (8, '1,3'),
+-- Places du couloir central
+(9, '0,4'), (10, '1,4');

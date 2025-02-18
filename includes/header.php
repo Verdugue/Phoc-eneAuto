@@ -70,6 +70,12 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
                             <i class="fa fa-tachometer"></i> Tableau de bord
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo $current_dir === 'parking' ? 'active' : ''; ?>" 
+                           href="/parking/">
+                            <i class="fa fa-car"></i> Parking
+                        </a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
