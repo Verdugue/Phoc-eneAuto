@@ -11,6 +11,7 @@ $stmt = $pdo->query("
     FROM vehicles v 
     LEFT JOIN parking_spots ps ON v.id = ps.vehicle_id 
     WHERE v.status = 'available'
+    AND (ps.spot_number IS NULL OR ps.vehicle_id IS NULL)
     ORDER BY v.brand, v.model
 ");
 $vehicles = $stmt->fetchAll();
@@ -275,8 +276,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleDragStart(e) {
         const vehicleCard = e.target.closest('.vehicle-card, .vehicle-item');
-        e.dataTransfer.setData('text/plain', vehicleCard.closest('[data-vehicle-id]').dataset.vehicleId);
-        e.dataTransfer.setData('source-spot', vehicleCard.closest('[data-spot]').dataset.spot);
+        const vehicleId = vehicleCard.dataset.vehicleId || 
+                         vehicleCard.closest('[data-vehicle-id]').dataset.vehicleId;
+        
+        e.dataTransfer.setData('text/plain', vehicleId);
+        e.dataTransfer.setData('source-spot', vehicleCard.closest('[data-spot]')?.dataset.spot || 'list');
         vehicleCard.classList.add('dragging');
     }
 
@@ -297,8 +301,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceSpot = e.dataTransfer.getData('source-spot');
         const targetSpot = spot.dataset.spot;
 
-        // Si la place est déjà occupée, on échange les véhicules
-        if (spot.dataset.vehicleId) {
+        // Vérifier si le véhicule vient de la liste (banc)
+        if (sourceSpot === 'list') {
+            updateParkingSpots({
+                vehicle_id: vehicleId,
+                source_spot: 'list',
+                target_spot: targetSpot,
+                action: 'add'
+            });
+        } else if (spot.dataset.vehicleId) {
+            // Si la place est déjà occupée, on échange les véhicules
             updateParkingSpots({
                 vehicle_id: vehicleId,
                 source_spot: sourceSpot,
@@ -328,33 +340,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function updateParkingSpots(data) {
-        fetch('/parking/update_spot.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Au lieu de recharger, on met à jour le DOM
-                switch (data.action) {
-                    case 'move':
-                        handleMoveUpdate(data.vehicle_id, data.source_spot, data.target_spot);
-                        break;
-                    case 'swap':
-                        handleSwapUpdate(data.vehicle_id, data.source_spot, data.target_spot);
-                        break;
-                    case 'remove':
-                        handleRemoveUpdate(data.vehicle_id, data.source_spot);
-                        break;
-                }
-            } else {
-                alert('Erreur lors de la mise à jour du parking: ' + data.error);
-            }
-        });
+    function handleAddUpdate(vehicleId, sourceSpot, targetSpot) {
+        // Trouver l'élément source dans la liste des véhicules
+        const sourceElement = document.querySelector(`.vehicle-item[data-vehicle-id="${vehicleId}"]`);
+        const targetElement = document.querySelector(`[data-spot="${targetSpot}"]`);
+        
+        if (sourceElement && targetElement) {
+            // Créer la nouvelle carte véhicule pour la place de parking
+            const vehicleCard = document.createElement('div');
+            vehicleCard.className = 'vehicle-card';
+            vehicleCard.draggable = true;
+            vehicleCard.innerHTML = sourceElement.querySelector('.card-body').innerHTML;
+
+            // Ajouter les événements drag & drop
+            vehicleCard.addEventListener('dragstart', handleDragStart);
+            vehicleCard.addEventListener('dragend', handleDragEnd);
+
+            // Ajouter avec animation
+            vehicleCard.style.opacity = '0';
+            targetElement.appendChild(vehicleCard);
+            targetElement.dataset.vehicleId = vehicleId;
+
+            // Supprimer l'élément de la liste des véhicules disponibles
+            sourceElement.remove();
+
+            // Animer l'apparition
+            setTimeout(() => {
+                vehicleCard.style.transition = 'opacity 0.3s ease';
+                vehicleCard.style.opacity = '1';
+            }, 10);
+        }
     }
 
     function handleMoveUpdate(vehicleId, sourceSpot, targetSpot) {
@@ -362,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetElement = document.querySelector(`[data-spot="${targetSpot}"]`);
         const vehicleCard = sourceElement.querySelector('.vehicle-card');
 
-        if (vehicleCard) {
+        if (vehicleCard && targetElement) {
             // Animer le déplacement
             vehicleCard.style.transition = 'all 0.3s ease';
             targetElement.appendChild(vehicleCard);
@@ -380,18 +395,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetCard = targetElement.querySelector('.vehicle-card');
 
         if (sourceCard && targetCard) {
-            // Animer l'échange
-            sourceCard.style.transition = targetCard.style.transition = 'all 0.3s ease';
-            
-            // Créer des clones pour l'animation
-            const sourceClone = sourceCard.cloneNode(true);
-            const targetClone = targetCard.cloneNode(true);
-            
             // Échanger les cartes
-            sourceElement.removeChild(sourceCard);
-            targetElement.removeChild(targetCard);
-            sourceElement.appendChild(targetClone);
-            targetElement.appendChild(sourceClone);
+            sourceElement.appendChild(targetCard);
+            targetElement.appendChild(sourceCard);
 
             // Mettre à jour les attributs
             const tempVehicleId = targetElement.dataset.vehicleId;
@@ -405,52 +411,81 @@ document.addEventListener('DOMContentLoaded', function() {
         const vehicleCard = sourceElement.querySelector('.vehicle-card');
 
         if (vehicleCard) {
-            // Animer la suppression
-            vehicleCard.style.transition = 'all 0.3s ease';
+            // Récupérer les données du véhicule
+            const brand = vehicleCard.querySelector('strong').textContent;
+            const registration = vehicleCard.querySelector('small').textContent;
+
+            // Créer l'élément pour la liste des véhicules disponibles
+            const newVehicleItem = document.createElement('div');
+            newVehicleItem.className = 'vehicle-item mb-2';
+            newVehicleItem.draggable = true;
+            newVehicleItem.dataset.vehicleId = vehicleId;
+            newVehicleItem.innerHTML = `
+                <div class="card">
+                    <div class="card-body p-2">
+                        <strong>${brand}</strong>
+                        <br>
+                        <small>${registration}</small>
+                    </div>
+                </div>
+            `;
+
+            // Ajouter les événements drag & drop
+            newVehicleItem.addEventListener('dragstart', handleDragStart);
+            newVehicleItem.addEventListener('dragend', handleDragEnd);
+
+            // Animer la suppression de l'ancienne carte
+            vehicleCard.style.transition = 'opacity 0.3s ease';
             vehicleCard.style.opacity = '0';
-            
+
             setTimeout(() => {
+                // Supprimer l'ancienne carte
                 sourceElement.removeChild(vehicleCard);
                 sourceElement.dataset.vehicleId = '';
 
-                // Ajouter à la liste des véhicules disponibles
-                const vehicleData = {
-                    brand: vehicleCard.querySelector('strong').textContent,
-                    registration_number: vehicleCard.querySelector('small').textContent
-                };
-                addToVehiclesList(vehicleData, vehicleId);
+                // Ajouter le véhicule à la liste avec animation
+                const vehiclesList = document.getElementById('vehicles-list');
+                newVehicleItem.style.opacity = '0';
+                vehiclesList.appendChild(newVehicleItem);
+                
+                setTimeout(() => {
+                    newVehicleItem.style.transition = 'opacity 0.3s ease';
+                    newVehicleItem.style.opacity = '1';
+                }, 10);
             }, 300);
         }
     }
 
-    function addToVehiclesList(vehicleData, vehicleId) {
-        const vehiclesList = document.getElementById('vehicles-list');
-        const newVehicle = document.createElement('div');
-        newVehicle.className = 'vehicle-item mb-2';
-        newVehicle.draggable = true;
-        newVehicle.dataset.vehicleId = vehicleId;
-        
-        newVehicle.innerHTML = `
-            <div class="card">
-                <div class="card-body p-2">
-                    <strong>${vehicleData.brand}</strong>
-                    <br>
-                    <small>${vehicleData.registration_number}</small>
-                </div>
-            </div>
-        `;
-
-        // Ajouter les événements drag & drop
-        newVehicle.addEventListener('dragstart', handleDragStart);
-        newVehicle.addEventListener('dragend', handleDragEnd);
-
-        // Ajouter avec animation
-        newVehicle.style.opacity = '0';
-        vehiclesList.appendChild(newVehicle);
-        setTimeout(() => {
-            newVehicle.style.transition = 'opacity 0.3s ease';
-            newVehicle.style.opacity = '1';
-        }, 10);
+    function updateParkingSpots(data) {
+        fetch('update_spot.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Appeler la fonction de mise à jour appropriée
+                switch (data.action) {
+                    case 'add':
+                        handleAddUpdate(data.vehicle_id, data.source_spot, data.target_spot);
+                        break;
+                    case 'move':
+                        handleMoveUpdate(data.vehicle_id, data.source_spot, data.target_spot);
+                        break;
+                    case 'swap':
+                        handleSwapUpdate(data.vehicle_id, data.source_spot, data.target_spot);
+                        break;
+                    case 'remove':
+                        handleRemoveUpdate(data.vehicle_id, data.source_spot);
+                        break;
+                }
+            } else {
+                alert('Erreur lors de la mise à jour du parking: ' + data.error);
+            }
+        });
     }
 });
 </script>

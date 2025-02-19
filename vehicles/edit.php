@@ -2,8 +2,10 @@
 session_start();
 require_once '../config/database.php';
 
-$page_title = isset($_GET['id']) ? "Modifier un Véhicule" : "Ajouter un Véhicule";
-require_once '../includes/header.php';
+// Déplacer toute la logique de traitement ici, avant le header
+$errors = [];
+$success = false;
+$redirect_url = '';
 
 $vehicle = [
     'brand' => '',
@@ -52,14 +54,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'status' => $_POST['status']
     ];
 
-    $errors = [];
-
     // Validations
     if (empty($vehicle['brand'])) $errors[] = "La marque est requise";
     if (empty($vehicle['model'])) $errors[] = "Le modèle est requis";
     if ($vehicle['year'] < 1900 || $vehicle['year'] > date('Y') + 1) $errors[] = "L'année n'est pas valide";
     if ($vehicle['mileage'] < 0) $errors[] = "Le kilométrage ne peut pas être négatif";
     if ($vehicle['price'] <= 0) $errors[] = "Le prix doit être supérieur à 0";
+
+    // Vérification de l'unicité du VIN et de l'immatriculation
+    if (empty($errors)) {
+        // Vérifier le VIN
+        $stmt = $pdo->prepare("SELECT id FROM vehicles WHERE vin_number = ? AND id != ?");
+        $stmt->execute([$vehicle['vin_number'], $_GET['id'] ?? 0]);
+        if ($stmt->fetch()) {
+            $errors[] = "Ce numéro VIN existe déjà dans la base de données.";
+        }
+
+        // Vérifier l'immatriculation
+        $stmt = $pdo->prepare("SELECT id FROM vehicles WHERE registration_number = ? AND id != ?");
+        $stmt->execute([$vehicle['registration_number'], $_GET['id'] ?? 0]);
+        if ($stmt->fetch()) {
+            $errors[] = "Ce numéro d'immatriculation existe déjà dans la base de données.";
+        }
+    }
 
     if (empty($errors)) {
         try {
@@ -140,21 +157,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdo->commit();
             $_SESSION['success'] = isset($_GET['id']) ? "Véhicule modifié avec succès" : "Véhicule ajouté avec succès";
-
-            // Rediriger vers la page de détails si c'est une modification
-            if (isset($_GET['id'])) {
-                header('Location: view.php?id=' . $_GET['id']);
-            } else {
-                // Pour un nouveau véhicule, rediriger vers sa page de détails
-                header('Location: view.php?id=' . $vehicle_id);
-            }
-            exit;
+            
+            // Au lieu de faire un header() direct, on stocke l'URL de redirection
+            $redirect_url = isset($_GET['id']) ? 
+                'view.php?id=' . $_GET['id'] : 
+                'view.php?id=' . $vehicle_id;
+            
+            // Marquer le succès
+            $success = true;
         } catch (PDOException $e) {
             $pdo->rollBack();
             $errors[] = "Erreur lors de l'enregistrement: " . $e->getMessage();
         }
     }
 }
+
+// Si succès, rediriger avant tout affichage
+if ($success && $redirect_url) {
+    header('Location: ' . $redirect_url);
+    exit;
+}
+
+// Après le traitement, on peut inclure le header
+$page_title = isset($_GET['id']) ? "Modifier un Véhicule" : "Ajouter un Véhicule";
+require_once '../includes/header.php';
 ?>
 
 <div class="container mt-4">

@@ -2,8 +2,11 @@
 session_start();
 require_once '../config/database.php';
 
-$page_title = "Ajouter un véhicule";
-require_once '../includes/header.php';
+// Déplacer toute la logique de traitement avant le header
+$errors = [];
+$success = false;
+$redirect_url = '';
+$supplier = null;
 
 if (!isset($_GET['supplier_id']) || !is_numeric($_GET['supplier_id'])) {
     $_SESSION['error'] = "ID du fournisseur invalide";
@@ -28,11 +31,27 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validation des données
         $required_fields = ['brand', 'model', 'year', 'mileage', 'price', 'vehicle_condition', 'color', 'fuel_type', 'transmission', 'registration_number', 'vin_number'];
-        $errors = [];
 
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
                 $errors[] = "Le champ " . str_replace('_', ' ', $field) . " est requis.";
+            }
+        }
+
+        // Vérification de l'unicité du VIN et de l'immatriculation
+        if (empty($errors)) {
+            // Vérifier le VIN
+            $stmt = $pdo->prepare("SELECT id FROM vehicles WHERE vin_number = ?");
+            $stmt->execute([$_POST['vin_number']]);
+            if ($stmt->fetch()) {
+                $errors[] = "Ce numéro VIN existe déjà dans la base de données.";
+            }
+
+            // Vérifier l'immatriculation
+            $stmt = $pdo->prepare("SELECT id FROM vehicles WHERE registration_number = ?");
+            $stmt->execute([$_POST['registration_number']]);
+            if ($stmt->fetch()) {
+                $errors[] = "Ce numéro d'immatriculation existe déjà dans la base de données.";
             }
         }
 
@@ -61,15 +80,23 @@ try {
             ]);
 
             $_SESSION['success'] = "Le véhicule a été ajouté avec succès.";
-            header('Location: /suppliers/view.php?id=' . $supplier_id);
-            exit;
-        } else {
-            $_SESSION['error'] = implode("<br>", $errors);
+            $redirect_url = '/suppliers/view.php?id=' . $supplier_id;
+            $success = true;
         }
     }
 } catch (PDOException $e) {
-    $_SESSION['error'] = "Erreur lors de l'ajout du véhicule: " . $e->getMessage();
+    $errors[] = "Erreur lors de l'ajout du véhicule: " . $e->getMessage();
 }
+
+// Effectuer la redirection si nécessaire avant tout affichage
+if ($success && $redirect_url) {
+    header('Location: ' . $redirect_url);
+    exit;
+}
+
+// Après le traitement, on peut inclure le header
+$page_title = "Ajouter un véhicule";
+require_once '../includes/header.php';
 ?>
 
 <div class="container mt-4">
@@ -77,6 +104,16 @@ try {
         <h1>Ajouter un véhicule pour <?php echo htmlspecialchars($supplier['name']); ?></h1>
         <a href="/suppliers/view.php?id=<?php echo $supplier_id; ?>" class="btn btn-secondary">Retour</a>
     </div>
+
+    <?php if (!empty($errors)): ?>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <?php foreach ($errors as $error): ?>
+                    <li><?php echo $error; ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
 
     <div class="card">
         <div class="card-body">

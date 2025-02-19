@@ -181,8 +181,8 @@ try {
                                         onclick="window.location.href='/transactions/view.php?id=<?php echo $transaction['id']; ?>'"
                                         class="transaction-row">
                                         <td><?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></td>
-                                        <td><?php echo htmlspecialchars($transaction['first_name'] . ' ' . $transaction['last_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($transaction['brand'] . ' ' . $transaction['model']); ?></td>
+                                        <td><?php echo htmlspecialchars(($transaction['first_name'] ?? '') . ' ' . ($transaction['last_name'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars(($transaction['brand'] ?? '') . ' ' . ($transaction['model'] ?? '')); ?></td>
                                         <td><?php echo number_format($transaction['price'], 2, ',', ' '); ?> €</td>
                                     </tr>
                                 <?php endforeach; ?>

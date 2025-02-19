@@ -21,6 +21,23 @@ try {
             }
         }
 
+        // Vérification de l'unicité du VIN et de l'immatriculation
+        if (empty($errors)) {
+            // Vérifier le VIN
+            $stmt = $pdo->prepare("SELECT id FROM vehicles WHERE vin_number = ?");
+            $stmt->execute([$_POST['vin_number']]);
+            if ($stmt->fetch()) {
+                $errors[] = "Ce numéro VIN existe déjà dans la base de données.";
+            }
+
+            // Vérifier l'immatriculation
+            $stmt = $pdo->prepare("SELECT id FROM vehicles WHERE registration_number = ?");
+            $stmt->execute([$_POST['registration_number']]);
+            if ($stmt->fetch()) {
+                $errors[] = "Ce numéro d'immatriculation existe déjà dans la base de données.";
+            }
+        }
+
         if (empty($errors)) {
             $stmt = $pdo->prepare("
                 INSERT INTO vehicles (

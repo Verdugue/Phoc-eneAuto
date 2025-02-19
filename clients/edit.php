@@ -55,6 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "L'email n'est pas valide";
     }
 
+    // Vérification de l'unicité du numéro de téléphone
+    if (!empty($client['phone'])) {
+        $stmt = $pdo->prepare("SELECT id FROM customers WHERE phone = ? AND id != ?");
+        $stmt->execute([$client['phone'], $_GET['id'] ?? 0]);
+        if ($stmt->fetch()) {
+            $errors[] = "Ce numéro de téléphone est déjà utilisé par un autre client";
+        }
+    }
+
     if (empty($errors)) {
         try {
             $pdo->beginTransaction();

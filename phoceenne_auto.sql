@@ -400,7 +400,7 @@ DROP TABLE IF EXISTS `parking_spots`;
 CREATE TABLE IF NOT EXISTS `parking_spots` (
     `id` INT PRIMARY KEY AUTO_INCREMENT,
     `spot_number` INT NOT NULL,
-    `vehicle_id` INT NULL,
+    `vehicle_id` BIGINT UNSIGNED NULL,
     `coordinates` VARCHAR(20) NOT NULL, -- Format "x,y"
     FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles`(`id`),
     UNIQUE KEY `unique_spot` (`spot_number`)

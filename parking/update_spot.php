@@ -14,13 +14,55 @@ try {
     $pdo->beginTransaction();
 
     switch ($data['action']) {
+        case 'add':
+            // Vérifier si la place existe déjà
+            $stmt = $pdo->prepare("SELECT spot_number FROM parking_spots WHERE spot_number = ?");
+            $stmt->execute([$data['target_spot']]);
+            
+            if ($stmt->fetch()) {
+                // Si la place existe, faire une mise à jour
+                $stmt = $pdo->prepare("
+                    UPDATE parking_spots 
+                    SET vehicle_id = ?, 
+                        coordinates = CONCAT(?, ',0')
+                    WHERE spot_number = ?
+                ");
+                $stmt->execute([
+                    $data['vehicle_id'],
+                    $data['target_spot'],
+                    $data['target_spot']
+                ]);
+            } else {
+                // Si la place n'existe pas, faire une insertion
+                $stmt = $pdo->prepare("
+                    INSERT INTO parking_spots (spot_number, vehicle_id, coordinates) 
+                    VALUES (?, ?, CONCAT(?, ',0'))
+                ");
+                $stmt->execute([
+                    $data['target_spot'], 
+                    $data['vehicle_id'],
+                    $data['target_spot']
+                ]);
+            }
+            break;
+
         case 'move':
-            // Déplacer un véhicule vers une place vide
+            // Libérer l'ancienne place
             $stmt = $pdo->prepare("UPDATE parking_spots SET vehicle_id = NULL WHERE spot_number = ?");
             $stmt->execute([$data['source_spot']]);
 
-            $stmt = $pdo->prepare("UPDATE parking_spots SET vehicle_id = ? WHERE spot_number = ?");
-            $stmt->execute([$data['vehicle_id'], $data['target_spot']]);
+            // Mettre à jour la nouvelle place
+            $stmt = $pdo->prepare("
+                UPDATE parking_spots 
+                SET vehicle_id = ?,
+                    coordinates = CONCAT(?, ',0')
+                WHERE spot_number = ?
+            ");
+            $stmt->execute([
+                $data['vehicle_id'],
+                $data['target_spot'],
+                $data['target_spot']
+            ]);
             break;
 
         case 'swap':

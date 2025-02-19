@@ -63,9 +63,14 @@ try {
                         <i class="fa fa-building me-2"></i>
                         <?php echo htmlspecialchars($supplier['name'] ?? ''); ?>
                     </h3>
-                    <a href="edit.php?id=<?php echo $supplier['id']; ?>" class="btn btn-light">
-                        <i class="fa fa-edit me-2"></i> Modifier
-                    </a>
+                    <div>
+                        <a href="add_vehicle.php?supplier_id=<?php echo $supplier['id']; ?>" class="btn btn-light me-2">
+                            <i class="fa fa-car me-2"></i> Ajouter un véhicule
+                        </a>
+                        <a href="edit.php?id=<?php echo $supplier['id']; ?>" class="btn btn-light">
+                            <i class="fa fa-edit me-2"></i> Modifier
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-4">
                     <!-- Informations de contact -->
