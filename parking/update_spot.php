@@ -15,49 +15,42 @@ try {
 
     switch ($data['action']) {
         case 'add':
-            // Vérifier si la place existe déjà
-            $stmt = $pdo->prepare("SELECT spot_number FROM parking_spots WHERE spot_number = ?");
+            // Vérifier si la place est déjà occupée
+            $stmt = $pdo->prepare("SELECT vehicle_id FROM parking_spots WHERE spot_number = ?");
             $stmt->execute([$data['target_spot']]);
+            $existing_vehicle = $stmt->fetchColumn();
             
-            if ($stmt->fetch()) {
-                // Si la place existe, faire une mise à jour
-                $stmt = $pdo->prepare("
-                    UPDATE parking_spots 
-                    SET vehicle_id = ?, 
-                        coordinates = CONCAT(?, ',0')
-                    WHERE spot_number = ?
-                ");
-                $stmt->execute([
-                    $data['vehicle_id'],
-                    $data['target_spot'],
-                    $data['target_spot']
-                ]);
-            } else {
-                // Si la place n'existe pas, faire une insertion
-                $stmt = $pdo->prepare("
-                    INSERT INTO parking_spots (spot_number, vehicle_id, coordinates) 
-                    VALUES (?, ?, CONCAT(?, ',0'))
-                ");
-                $stmt->execute([
-                    $data['target_spot'], 
-                    $data['vehicle_id'],
-                    $data['target_spot']
-                ]);
+            if ($existing_vehicle) {
+                throw new Exception('Cette place est déjà occupée par un autre véhicule.');
             }
+
+            // Insérer ou mettre à jour la place
+            $stmt = $pdo->prepare("
+                INSERT INTO parking_spots (spot_number, vehicle_id, coordinates) 
+                VALUES (?, ?, CONCAT(?, ',0'))
+                ON DUPLICATE KEY UPDATE vehicle_id = VALUES(vehicle_id), coordinates = VALUES(coordinates)
+            ");
+            $stmt->execute([
+                $data['target_spot'], 
+                $data['vehicle_id'],
+                $data['target_spot']
+            ]);
             break;
 
         case 'move':
-            // Libérer l'ancienne place
+            // Libérer l'ancienne place et vérifier la nouvelle
+            $stmt = $pdo->prepare("SELECT vehicle_id FROM parking_spots WHERE spot_number = ?");
+            $stmt->execute([$data['target_spot']]);
+            $existing_vehicle = $stmt->fetchColumn();
+            
+            if ($existing_vehicle) {
+                throw new Exception('La nouvelle place est déjà occupée.');
+            }
+            
             $stmt = $pdo->prepare("UPDATE parking_spots SET vehicle_id = NULL WHERE spot_number = ?");
             $stmt->execute([$data['source_spot']]);
 
-            // Mettre à jour la nouvelle place
-            $stmt = $pdo->prepare("
-                UPDATE parking_spots 
-                SET vehicle_id = ?,
-                    coordinates = CONCAT(?, ',0')
-                WHERE spot_number = ?
-            ");
+            $stmt = $pdo->prepare("UPDATE parking_spots SET vehicle_id = ?, coordinates = CONCAT(?, ',0') WHERE spot_number = ?");
             $stmt->execute([
                 $data['vehicle_id'],
                 $data['target_spot'],
@@ -70,15 +63,12 @@ try {
             $stmt = $pdo->prepare("SELECT vehicle_id FROM parking_spots WHERE spot_number = ?");
             $stmt->execute([$data['target_spot']]);
             $target_vehicle = $stmt->fetchColumn();
-
-            $stmt = $pdo->prepare("
-                UPDATE parking_spots 
-                SET vehicle_id = CASE 
-                    WHEN spot_number = ? THEN ?
-                    WHEN spot_number = ? THEN ?
-                    END
-                WHERE spot_number IN (?, ?)
-            ");
+            
+            if (!$target_vehicle) {
+                throw new Exception('Aucun véhicule à échanger.');
+            }
+            
+            $stmt = $pdo->prepare("UPDATE parking_spots SET vehicle_id = CASE WHEN spot_number = ? THEN ? WHEN spot_number = ? THEN ? END WHERE spot_number IN (?, ?)");
             $stmt->execute([
                 $data['source_spot'], $target_vehicle,
                 $data['target_spot'], $data['vehicle_id'],
@@ -101,7 +91,7 @@ try {
         'success' => true,
         'action' => $data['action'],
         'vehicle_id' => $data['vehicle_id'],
-        'source_spot' => $data['source_spot'],
+        'source_spot' => $data['source_spot'] ?? null,
         'target_spot' => $data['target_spot'] ?? null
     ]);
 
@@ -113,4 +103,4 @@ try {
         'success' => false,
         'error' => $e->getMessage()
     ]);
-} 
+}
