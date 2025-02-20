@@ -203,6 +203,12 @@ try {
     border-radius: 15px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .card-header {
@@ -235,6 +241,16 @@ try {
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
+/* Style des sections */
+.section-title {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--light-gray);
+}
+
 /* Style des boutons */
 .btn {
     padding: 0.75rem 1.5rem;
@@ -253,26 +269,31 @@ try {
     box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
 }
 
-/* Style pour les sections de paiement */
-.payment-section {
+/* Style pour le résumé du paiement */
+.payment-summary {
     background: #f8fafc;
     border-radius: 8px;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-top: 1rem;
 }
 
-.payment-summary {
-    background: #fff;
+.payment-summary h5 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Style pour les documents */
+.document-upload {
+    border: 2px dashed #e2e8f0;
     border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
 }
 
-/* Style pour les messages d'erreur */
-.invalid-feedback {
-    color: var(--danger-color);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+.document-upload:hover {
+    border-color: var(--accent-color);
+    background: #f8fafc;
 }
 
 /* Responsive design */
@@ -285,67 +306,103 @@ try {
         margin-bottom: 1rem;
     }
 }
+
+/* Ajout du style des sections */
+.section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Style des champs Select2 */
+.select2-container--bootstrap-5 .select2-selection {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem;
+    height: auto;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
 </style>
 
 <div class="container mt-4">
-    <div class="card">
-        <div class="card-header">
-            <h2 class="mb-0">Nouvelle Transaction</h2>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">
+                <i class="fa fa-plus-circle me-2"></i>Nouvelle Transaction
+            </h2>
         </div>
         <div class="card-body">
-            <form method="POST" action="process_transaction.php" enctype="multipart/form-data">
+            <form method="POST" action="process_add.php" enctype="multipart/form-data">
                 <!-- Informations principales -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="customer_id" class="form-label">Client*</label>
-                        <select class="form-select" id="customer_id" name="customer_id" required>
-                            <option value="">Sélectionner un client</option>
-                            <?php foreach ($clients as $client): ?>
-                                <option value="<?= $client['id'] ?>" 
-                                        data-search="<?= htmlspecialchars($client['first_name'] . ' ' . $client['last_name']) ?>">
-                                    <?= htmlspecialchars($client['first_name'] . ' ' . $client['last_name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="vehicle_id" class="form-label">Véhicule*</label>
-                        <select class="form-select" id="vehicle_id" name="vehicle_id" required>
-                            <option value="">Sélectionner un véhicule</option>
-                            <?php foreach ($vehicles as $vehicle): ?>
-                                <option value="<?= $vehicle['id'] ?>" 
-                                        data-price="<?= $vehicle['price'] ?>"
-                                        data-search="<?= htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']) ?>">
-                                    <?= htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model'] . ' (' . $vehicle['year'] . ') - ' . number_format($vehicle['price'], 2, ',', ' ') . ' €') ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                <div class="section mb-4">
+                    <h4 class="section-title">
+                        <i class="fa fa-info-circle me-2"></i>Informations principales
+                    </h4>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="customer_id" class="form-label">Client*</label>
+                            <select class="form-select" id="customer_id" name="customer_id" required>
+                                <option value="">Sélectionner un client</option>
+                                <?php foreach ($clients as $client): ?>
+                                    <option value="<?= $client['id'] ?>" 
+                                            data-search="<?= htmlspecialchars($client['first_name'] . ' ' . $client['last_name']) ?>">
+                                        <?= htmlspecialchars($client['first_name'] . ' ' . $client['last_name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vehicle_id" class="form-label">Véhicule*</label>
+                            <select class="form-select" id="vehicle_id" name="vehicle_id" required>
+                                <option value="">Sélectionner un véhicule</option>
+                                <?php foreach ($vehicles as $vehicle): ?>
+                                    <option value="<?= $vehicle['id'] ?>" 
+                                            data-price="<?= $vehicle['price'] ?>"
+                                            data-search="<?= htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']) ?>">
+                                        <?= htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model'] . ' (' . $vehicle['year'] . ') - ' . number_format($vehicle['price'], 2, ',', ' ') . ' €') ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Type de transaction et prix -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <label for="transaction_type" class="form-label">Type de transaction*</label>
-                        <select class="form-select" id="transaction_type" name="transaction_type" required>
-                            <option value="sale">Vente</option>
-                            <option value="purchase">Achat</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="price" class="form-label">Prix*</label>
-                        <input type="number" step="0.01" class="form-control" id="price" name="price" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="transaction_date" class="form-label">Date de transaction*</label>
-                        <input type="date" class="form-control" id="transaction_date" name="transaction_date" 
-                               value="<?php echo date('Y-m-d'); ?>" required>
+                <div class="section mb-4">
+                    <h4 class="section-title">
+                        <i class="fa fa-exchange me-2"></i>Détails de la transaction
+                    </h4>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="transaction_type" class="form-label">Type de transaction*</label>
+                            <select class="form-select" id="transaction_type" name="transaction_type" required>
+                                <option value="sale">Vente</option>
+                                <option value="purchase">Achat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="price" class="form-label">Prix*</label>
+                            <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="transaction_date" class="form-label">Date de transaction*</label>
+                            <input type="date" class="form-control" id="transaction_date" name="transaction_date" 
+                                   value="<?php echo date('Y-m-d'); ?>" required>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Paiement -->
-                <div class="payment-section">
-                    <h4 class="mb-3">Modalités de paiement</h4>
+                <div class="section mb-4">
+                    <h4 class="section-title">
+                        <i class="fa fa-credit-card me-2"></i>Modalités de paiement
+                    </h4>
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label for="payment_method" class="form-label">Méthode de paiement*</label>
@@ -364,81 +421,93 @@ try {
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Options de paiement mensuel -->
-                    <div id="monthly_options" style="display: none;">
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <label for="down_payment" class="form-label">Acompte</label>
-                                <input type="number" step="0.01" class="form-control" id="down_payment" name="down_payment" value="0">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="installments" class="form-label">Nombre de mensualités</label>
-                                <select class="form-select" id="installments" name="installments">
-                                    <?php for($i = 2; $i <= 24; $i++): ?>
-                                        <option value="<?= $i ?>"><?= $i ?> mois</option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="first_payment_date" class="form-label">Date 1ère mensualité</label>
-                                <input type="date" class="form-control" id="first_payment_date" name="first_payment_date">
-                            </div>
+                <!-- Options de paiement mensuel -->
+                <div id="monthly_options" style="display: none;">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="down_payment" class="form-label">Acompte</label>
+                            <input type="number" step="0.01" class="form-control" id="down_payment" name="down_payment" value="0">
                         </div>
+                        <div class="col-md-4">
+                            <label for="installments" class="form-label">Nombre de mensualités</label>
+                            <select class="form-select" id="installments" name="installments">
+                                <?php for($i = 2; $i <= 24; $i++): ?>
+                                    <option value="<?= $i ?>"><?= $i ?> mois</option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="first_payment_date" class="form-label">Date 1ère mensualité</label>
+                            <input type="date" class="form-control" id="first_payment_date" name="first_payment_date">
+                        </div>
+                    </div>
 
-                        <!-- Résumé du paiement -->
-                        <div class="payment-summary">
-                            <h5 class="mb-3">Résumé du paiement</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p>Prix total : <span id="total_price">0.00</span> €</p>
-                                    <p>Acompte : <span id="down_payment_display">0.00</span> €</p>
-                                    <p>Montant restant : <span id="remaining_amount">0.00</span> €</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p>Nombre de mensualités : <span id="installments_display">0</span></p>
-                                    <p>Montant mensuel : <span id="monthly_amount">0.00</span> €</p>
-                                </div>
+                    <!-- Résumé du paiement -->
+                    <div class="payment-summary">
+                        <h5 class="mb-3">Résumé du paiement</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p>Prix total : <span id="total_price">0.00</span> €</p>
+                                <p>Acompte : <span id="down_payment_display">0.00</span> €</p>
+                                <p>Montant restant : <span id="remaining_amount">0.00</span> €</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p>Nombre de mensualités : <span id="installments_display">0</span></p>
+                                <p>Montant mensuel : <span id="monthly_amount">0.00</span> €</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Notes -->
-                <div class="mb-4">
-                    <label for="notes" class="form-label">Notes</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                <div class="section mb-4">
+                    <h4 class="section-title">
+                        <i class="fa fa-sticky-note me-2"></i>Notes
+                    </h4>
+                    <div class="mb-4">
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
                 </div>
 
                 <!-- Documents -->
-                <div class="mb-4">
-                    <label class="form-label">Documents</label>
-                    <div id="document_container">
-                        <div class="document-row mb-2">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <input type="file" name="documents[]" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <select name="document_types[]" class="form-select">
-                                        <option value="invoice">Facture</option>
-                                        <option value="contract">Contrat</option>
-                                        <option value="registration">Carte grise</option>
-                                        <option value="insurance">Assurance</option>
-                                        <option value="other">Autre</option>
-                                    </select>
+                <div class="section mb-4">
+                    <h4 class="section-title">
+                        <i class="fa fa-file me-2"></i>Documents
+                    </h4>
+                    <div class="document-upload mb-4">
+                        <div id="document_container">
+                            <div class="document-row mb-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="file" name="documents[]" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select name="document_types[]" class="form-select">
+                                            <option value="invoice">Facture</option>
+                                            <option value="contract">Contrat</option>
+                                            <option value="registration">Carte grise</option>
+                                            <option value="insurance">Assurance</option>
+                                            <option value="other">Autre</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-outline-secondary mt-2" onclick="addDocumentRow()">
+                            <i class="fa fa-plus"></i> Ajouter un document
+                        </button>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary mt-2" onclick="addDocumentRow()">
-                        <i class="fa fa-plus"></i> Ajouter un document
-                    </button>
                 </div>
 
                 <div class="d-flex justify-content-between">
-                    <a href="/transactions/" class="btn btn-secondary">Annuler</a>
-                    <button type="submit" class="btn btn-primary">Créer la transaction</button>
+                    <a href="/transactions/" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left me-2"></i>Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-check me-2"></i>Créer la transaction
+                    </button>
                 </div>
             </form>
         </div>
@@ -468,8 +537,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const select2Config = {
         theme: 'bootstrap-5',
         width: '100%',
-        minimumInputLength: 0, // Permettre l'affichage de tous les éléments au début
-        dropdownParent: $('body'), // Assurer que le dropdown s'affiche correctement
+        minimumInputLength: 0,
+        dropdownParent: $('body'),
         language: {
             noResults: function() {
                 return "Aucun résultat trouvé";
@@ -488,27 +557,6 @@ document.addEventListener('DOMContentLoaded', function() {
         templateResult: function(vehicle) {
             if (!vehicle.id) return vehicle.text;
             return $(`<span>${vehicle.text}</span>`);
-        },
-        matcher: function(params, data) {
-            // Afficher tous les éléments si pas de recherche
-            if (!params.term) {
-                return data;
-            }
-
-            const searchText = params.term.toLowerCase();
-            const vehicle = $(data.element);
-            const searchStr = (
-                vehicle.data('search') + ' ' + // Marque et modèle
-                data.text.toLowerCase() // Texte affiché (inclut le prix)
-            );
-
-            // Retourner l'élément si le texte correspond
-            if (searchStr.toLowerCase().includes(searchText)) {
-                return data;
-            }
-
-            // Sinon ne pas l'afficher
-            return null;
         }
     });
 
@@ -520,26 +568,6 @@ document.addEventListener('DOMContentLoaded', function() {
         templateResult: function(client) {
             if (!client.id) return client.text;
             return $(`<span>${client.text}</span>`);
-        },
-        matcher: function(params, data) {
-            // Afficher tous les éléments si pas de recherche
-            if (!params.term) {
-                return data;
-            }
-
-            const searchText = params.term.toLowerCase();
-            const searchStr = (
-                $(data.element).data('search') + ' ' + // Prénom et nom
-                data.text.toLowerCase() // Texte affiché
-            );
-
-            // Retourner l'élément si le texte correspond
-            if (searchStr.toLowerCase().includes(searchText)) {
-                return data;
-            }
-
-            // Sinon ne pas l'afficher
-            return null;
         }
     });
 
