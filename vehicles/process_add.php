@@ -5,8 +5,10 @@ require_once '../config/database.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Vérification des champs requis
-        $required_fields = ['brand', 'model', 'year', 'mileage', 'price', 'vehicle_condition', 
-                          'color', 'fuel_type', 'transmission', 'registration_number', 'vin_number'];
+        $required_fields = [
+            'brand', 'model', 'year', 'mileage', 'price', 
+            'vehicle_condition', 'fuel_type', 'transmission'
+        ];
         $errors = [];
 
         foreach ($required_fields as $field) {

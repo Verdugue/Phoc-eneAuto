@@ -2,7 +2,7 @@
 $host = 'localhost';
 $dbname = 'phoceenne_auto';
 $username = 'root';
-$password = '';
+$password = 'lolipope2004';
 
 try {
     $pdo = new PDO(

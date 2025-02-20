@@ -40,10 +40,30 @@ try {
 ?>
 
 <div class="container mt-4">
-    <div class="mb-3">
-        <a href="/transactions/" class="btn btn-outline-secondary">
-            <i class="fa fa-arrow-left"></i> Retour
-        </a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex gap-2">
+            <a href="/transactions/" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> Retour
+            </a>
+            
+            <?php if ($transaction['status'] !== 'cancelled'): ?>
+                <a href="edit.php?id=<?php echo $transaction['id']; ?>" class="btn btn-primary">
+                    <i class="fa fa-edit"></i> Modifier
+                </a>
+                
+                <a href="print_invoice.php?id=<?php echo $transaction['id']; ?>" 
+                   class="btn btn-info" target="_blank">
+                    <i class="fa fa-print"></i> Imprimer la facture
+                </a>
+            <?php endif; ?>
+        </div>
+        
+        <?php if ($transaction['status'] !== 'cancelled'): ?>
+            <button onclick="cancelTransaction(<?php echo $transaction['id']; ?>)" 
+                    class="btn btn-danger">
+                <i class="fa fa-times"></i> Annuler la transaction
+            </button>
+        <?php endif; ?>
     </div>
 
     <div class="row">
@@ -54,10 +74,6 @@ try {
                         <i class="fa fa-file-text-o me-2"></i>
                         Transaction #<?php echo $transaction['id']; ?>
                     </h3>
-                    <a href="print_invoice.php?id=<?php echo $transaction['id']; ?>" 
-                       class="btn btn-light" target="_blank">
-                        <i class="fa fa-print me-2"></i> Imprimer la facture
-                    </a>
                 </div>
                 <div class="card-body p-4">
                     <!-- Informations générales dans des cartes -->

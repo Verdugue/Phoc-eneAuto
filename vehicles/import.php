@@ -26,8 +26,14 @@ try {
             $stmt = $pdo->prepare("
                 INSERT INTO vehicles (
                     registration_number, vin_number, brand, model, 
-                    year, supplier_id, status
-                ) VALUES (?, ?, ?, ?, ?, ?, 'available')
+                    year, supplier_id, status, vehicle_condition,
+                    mileage, price, fuel_type, transmission,
+                    color, created_at, updated_at
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, 'available', 'used',
+                    0, 0, 'Essence', 'Manuelle',
+                    NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                )
             ");
 
             $stmt->execute([

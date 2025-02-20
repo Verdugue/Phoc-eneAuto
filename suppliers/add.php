@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            $sql = "INSERT INTO suppliers (name, contact_name, email, phone, address, postal_code, city) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO suppliers (name, contact_name, email, phone, website, address, postal_code, city) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['contact_name'],
                 $_POST['email'],
                 $_POST['phone'],
+                $_POST['website'] ?? null,
                 $_POST['address'],
                 $_POST['postal_code'],
                 $_POST['city']
@@ -81,6 +82,12 @@ require_once '../includes/header.php';
                 </div>
 
                 <div class="mb-3">
+                    <label for="website" class="form-label">Site Web</label>
+                    <input type="url" class="form-control" id="website" name="website" placeholder="https://"
+                           value="<?php echo isset($_POST['website']) ? htmlspecialchars($_POST['website']) : ''; ?>">
+                </div>
+
+                <div class="mb-3">
                     <label for="address" class="form-label">Adresse *</label>
                     <input type="text" class="form-control" id="address" name="address" required
                            value="<?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?>">
@@ -92,10 +99,20 @@ require_once '../includes/header.php';
                         <input type="text" class="form-control" id="postal_code" name="postal_code" required
                                value="<?php echo isset($_POST['postal_code']) ? htmlspecialchars($_POST['postal_code']) : ''; ?>">
                     </div>
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="city" class="form-label">Ville *</label>
                         <input type="text" class="form-control" id="city" name="city" required
                                value="<?php echo isset($_POST['city']) ? htmlspecialchars($_POST['city']) : ''; ?>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="country" class="form-label">Pays *</label>
+                        <select class="form-select" id="country" name="country" required>
+                            <option value="France" <?php echo (isset($_POST['country']) && $_POST['country'] === 'France') ? 'selected' : ''; ?>>France</option>
+                            <option value="Belgique" <?php echo (isset($_POST['country']) && $_POST['country'] === 'Belgique') ? 'selected' : ''; ?>>Belgique</option>
+                            <option value="Suisse" <?php echo (isset($_POST['country']) && $_POST['country'] === 'Suisse') ? 'selected' : ''; ?>>Suisse</option>
+                            <option value="Luxembourg" <?php echo (isset($_POST['country']) && $_POST['country'] === 'Luxembourg') ? 'selected' : ''; ?>>Luxembourg</option>
+                            <option value="Monaco" <?php echo (isset($_POST['country']) && $_POST['country'] === 'Monaco') ? 'selected' : ''; ?>>Monaco</option>
+                        </select>
                     </div>
                 </div>
 

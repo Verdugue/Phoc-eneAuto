@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $sql = "UPDATE suppliers 
                     SET name = ?, contact_name = ?, email = ?, phone = ?, 
-                        address = ?, postal_code = ?, city = ?
+                        website = ?, address = ?, postal_code = ?, city = ?, country = ?
                     WHERE id = ?";
             
             $stmt = $pdo->prepare($sql);
@@ -27,9 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['contact_name'],
                 $_POST['email'],
                 $_POST['phone'],
+                $_POST['website'] ?? null,
                 $_POST['address'],
                 $_POST['postal_code'],
                 $_POST['city'],
+                $_POST['country'],
                 $_POST['id']
             ]);
 
@@ -80,6 +82,8 @@ require_once '../includes/header.php';
     <div class="card">
         <div class="card-body">
             <form method="POST">
+                <input type="hidden" name="id" value="<?php echo htmlspecialchars($supplier['id']); ?>">
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="name" class="form-label">Nom de l'entreprise *</label>
@@ -107,6 +111,12 @@ require_once '../includes/header.php';
                 </div>
 
                 <div class="mb-3">
+                    <label for="website" class="form-label">Site Web</label>
+                    <input type="url" class="form-control" id="website" name="website" placeholder="https://"
+                           value="<?php echo htmlspecialchars($supplier['website'] ?? ''); ?>">
+                </div>
+
+                <div class="mb-3">
                     <label for="address" class="form-label">Adresse *</label>
                     <input type="text" class="form-control" id="address" name="address" required
                            value="<?php echo htmlspecialchars($supplier['address']); ?>">
@@ -118,10 +128,20 @@ require_once '../includes/header.php';
                         <input type="text" class="form-control" id="postal_code" name="postal_code" required
                                value="<?php echo htmlspecialchars($supplier['postal_code']); ?>">
                     </div>
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="city" class="form-label">Ville *</label>
                         <input type="text" class="form-control" id="city" name="city" required
                                value="<?php echo htmlspecialchars($supplier['city']); ?>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="country" class="form-label">Pays *</label>
+                        <select class="form-select" id="country" name="country" required>
+                            <option value="France" <?php echo $supplier['country'] === 'France' ? 'selected' : ''; ?>>France</option>
+                            <option value="Belgique" <?php echo $supplier['country'] === 'Belgique' ? 'selected' : ''; ?>>Belgique</option>
+                            <option value="Suisse" <?php echo $supplier['country'] === 'Suisse' ? 'selected' : ''; ?>>Suisse</option>
+                            <option value="Luxembourg" <?php echo $supplier['country'] === 'Luxembourg' ? 'selected' : ''; ?>>Luxembourg</option>
+                            <option value="Monaco" <?php echo $supplier['country'] === 'Monaco' ? 'selected' : ''; ?>>Monaco</option>
+                        </select>
                     </div>
                 </div>
 

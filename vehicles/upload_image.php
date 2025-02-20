@@ -10,6 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vehicle_id'])) {
     $vehicle_id = $_POST['vehicle_id'];
     $upload_dir = '../uploads/vehicles/' . $vehicle_id . '/';
     
+    // Créer le dossier parent s'il n'existe pas
+    if (!file_exists('../uploads/vehicles/')) {
+        mkdir('../uploads/vehicles/', 0777, true);
+    }
+    
     // Créer le dossier s'il n'existe pas
     if (!file_exists($upload_dir)) {
         mkdir($upload_dir, 0777, true);

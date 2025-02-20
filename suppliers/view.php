@@ -94,23 +94,30 @@ try {
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card h-100 bg-light border-0">
-                                <div class="card-body text-center">
-                                    <i class="fa fa-globe fa-2x mb-2 text-primary"></i>
-                                    <h6 class="text-muted mb-1">Site Web</h6>
-                                    <p class="mb-0 fw-bold">
-                                        <?php if (!empty($supplier['website'])): ?>
-                                            <a href="<?php echo htmlspecialchars($supplier['website']); ?>" 
-                                               target="_blank" 
-                                               class="text-primary text-decoration-none">
-                                                Visiter le site
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="text-muted">Non renseigné</span>
-                                        <?php endif; ?>
-                                    </p>
+                            <?php if (!empty($supplier['website'])): ?>
+                                <a href="<?php echo htmlspecialchars($supplier['website']); ?>" 
+                                   target="_blank" 
+                                   class="text-decoration-none">
+                                    <div class="card h-100 bg-light border-0 hover-card">
+                                        <div class="card-body text-center">
+                                            <i class="fa fa-globe fa-2x mb-2 text-primary"></i>
+                                            <h6 class="text-muted mb-1">Site Web</h6>
+                                            <p class="mb-0 text-primary">
+                                                <?php echo parse_url($supplier['website'], PHP_URL_HOST); ?>
+                                                <i class="fa fa-external-link ms-1 small"></i>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="card h-100 bg-light border-0">
+                                    <div class="card-body text-center">
+                                        <i class="fa fa-globe fa-2x mb-2 text-muted"></i>
+                                        <h6 class="text-muted mb-1">Site Web</h6>
+                                        <p class="mb-0 text-muted">Non renseigné</p>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
