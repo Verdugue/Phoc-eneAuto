@@ -1,9 +1,9 @@
-@echo off
+@echo on
 title Phoceenne Auto - Server Launcher
 color 0A
 
 :: Définir le chemin vers PHP de WAMP64
-set PHP_PATH=C:\wamp64\bin\php\php8.2.18\php.exe
+set PHP_PATH=C:\wamp64\bin\php\php8.3.14\php.exe
 set PORT=9090
 
 :: Vérifier si PHP existe dans WAMP64
@@ -38,4 +38,12 @@ echo.
 start http://localhost:%PORT%
 
 :: Démarrer le serveur PHP avec le chemin complet
-php -S localhost:9090 router.php 
+echo Testing PHP installation...
+"%PHP_PATH%" -v
+echo.
+echo Checking PHP modules...
+"%PHP_PATH%" -m
+echo.
+echo Starting server...
+"%PHP_PATH%" -S localhost:%PORT% router.php
+pause 

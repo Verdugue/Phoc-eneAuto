@@ -69,9 +69,9 @@ try {
     ");
     $activeCustomers = $stmt->fetch()['count'];
 
-    // Ajouter cette requête pour les dernières transactions
+    // Modifier la requête des transactions récentes
     $stmt = $pdo->query("
-        SELECT t.*, v.brand, v.model, c.first_name, c.last_name
+        SELECT t.*, v.brand, v.model, v.version, v.location, c.first_name, c.last_name
         FROM transactions t
         JOIN vehicles v ON t.vehicle_id = v.id
         JOIN customers c ON t.customer_id = c.id
@@ -172,6 +172,8 @@ try {
                                     <th class="text-light">Date</th>
                                     <th class="text-light">Client</th>
                                     <th class="text-light">Véhicule</th>
+                                    <th class="text-light">Version</th>
+                                    <th class="text-light">Location</th>
                                     <th class="text-light">Montant</th>
                                 </tr>
                             </thead>
@@ -183,6 +185,8 @@ try {
                                         <td><?php echo date('d/m/Y', strtotime($transaction['transaction_date'])); ?></td>
                                         <td><?php echo htmlspecialchars(($transaction['first_name'] ?? '') . ' ' . ($transaction['last_name'] ?? '')); ?></td>
                                         <td><?php echo htmlspecialchars(($transaction['brand'] ?? '') . ' ' . ($transaction['model'] ?? '')); ?></td>
+                                        <td><?php echo htmlspecialchars($transaction['version'] ?? ''); ?></td>
+                                        <td><?php echo htmlspecialchars($transaction['location'] ?? ''); ?></td>
                                         <td><?php echo number_format($transaction['price'], 2, ',', ' '); ?> €</td>
                                     </tr>
                                 <?php endforeach; ?>
