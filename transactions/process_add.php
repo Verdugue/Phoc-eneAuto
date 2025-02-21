@@ -53,16 +53,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $remaining_amount = $data['price'] - $down_payment;
             }
 
+            // Récupérer les informations complètes du véhicule
+            $stmt = $pdo->prepare("SELECT brand, model, version, year, color, vin_number, 
+                                         registration_number, mileage, fuel_type, transmission,
+                                         registration_date, options, location 
+                                  FROM vehicles 
+                                  WHERE id = ?");
+            $stmt->execute([$data['vehicle_id']]);
+            $vehicle = $stmt->fetch();
+
+            // Ajouter les informations du véhicule aux données de la transaction
+            $data = array_merge($data, [
+                'brand' => $vehicle['brand'],
+                'model' => $vehicle['model'],
+                'version' => $vehicle['version'],
+                'year' => $vehicle['year'],
+                'color' => $vehicle['color'],
+                'vin_number' => $vehicle['vin_number'],
+                'registration_number' => $vehicle['registration_number'],
+                'mileage' => $vehicle['mileage'],
+                'fuel_type' => $vehicle['fuel_type'],
+                'transmission' => $vehicle['transmission'],
+                'registration_date' => $vehicle['registration_date'],
+                'options' => $vehicle['options'],
+                'location' => $vehicle['location']
+            ]);
+
             // Insertion de la transaction
-            $sql = "INSERT INTO transactions (customer_id, vehicle_id, user_id, transaction_type, 
-                    price, payment_method, payment_type, invoice_number, notes, status";
+            $sql = "INSERT INTO transactions (
+                customer_id, vehicle_id, user_id, transaction_type, price, 
+                payment_method, payment_type, invoice_number, notes, status,
+                brand, model, version, year, color, vin_number, 
+                registration_number, mileage, fuel_type, transmission,
+                registration_date, options, location
+            )";
             
-            $values = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+            $values = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $params = [
                 $data['customer_id'], $data['vehicle_id'], $data['user_id'],
                 $data['transaction_type'], $data['price'], $data['payment_method'],
                 $data['payment_type'], $data['invoice_number'], $data['notes'],
-                $data['status']
+                $data['status'], $data['brand'], $data['model'], $data['version'],
+                $data['year'], $data['color'], $data['vin_number'], 
+                $data['registration_number'], $data['mileage'], $data['fuel_type'],
+                $data['transmission'], $data['registration_date'], $data['options'],
+                $data['location']
             ];
 
             if ($_POST['payment_type'] === 'monthly') {

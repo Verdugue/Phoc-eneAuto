@@ -3,7 +3,7 @@ title Phoceenne Auto - Server Launcher
 color 0A
 
 :: Définir le chemin vers PHP de WAMP64
-set PHP_PATH=C:\wamp64\bin\php\php8.3.6\php.exe
+set PHP_PATH=C:\wamp64\bin\php\php8.3.14\php.exe
 set PORT=9090
 
 :: Vérifier si PHP existe dans WAMP64

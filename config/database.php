@@ -2,7 +2,7 @@
 $host = 'localhost';
 $dbname = 'phoceenne_auto';
 $username = 'root';
-$password = 'lolipope2004';
+$password = '';  // Mot de passe vide pour XAMPP par défaut
 
 try {
     $pdo = new PDO(

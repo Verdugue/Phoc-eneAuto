@@ -1,63 +1,65 @@
 <?php
 session_start();
-require_once 'config/database.php';
+require_once 'includes/init.php';
 
-$page_title = "Mon Profil";
-require_once 'includes/header.php';
+// Démarrer la mise en mémoire tampon
+ob_start();
+
+// Vérifier si l'utilisateur est connecté
+if (!isset($_SESSION['user_id'])) {
+    header('Location: /login.php');
+    exit;
+}
 
 try {
+    // Récupérer les informations de l'utilisateur
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        throw new Exception("Utilisateur non trouvé");
+    }
+
+    // Traitement du formulaire de mise à jour
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updates = [];
         $params = [];
 
-        // Gestion de l'upload de la photo
+        // Validation et mise à jour des champs
+        if (!empty($_POST['email']) && $_POST['email'] !== $user['email']) {
+            $updates[] = "email = ?";
+            $params[] = $_POST['email'];
+        }
+
+        // Traitement de l'image de profil
         if (!empty($_FILES['profile_image']['name'])) {
             $upload_dir = 'uploads/profiles/';
             if (!file_exists($upload_dir)) {
                 mkdir($upload_dir, 0777, true);
             }
 
-            $file_extension = strtolower(pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION));
-            $new_filename = uniqid('profile_') . '.' . $file_extension;
+            $file_extension = pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION);
+            $new_filename = 'profile_' . uniqid() . '.' . $file_extension;
             $upload_path = $upload_dir . $new_filename;
 
             if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $upload_path)) {
-                // Supprimer l'ancienne image si elle existe et n'est pas l'image par défaut
-                if (!empty($user['profile_image']) && 
-                    $user['profile_image'] !== '/assets/images/defaults/default-profile.png' && 
-                    file_exists($user['profile_image'])) {
-                    unlink($user['profile_image']);
-                }
-                
                 $updates[] = "profile_image = ?";
-                $params[] = '/' . $upload_path; // Ajouter le slash pour le chemin web
+                $params[] = '/' . $upload_path;
             }
         }
 
-        // Mise à jour des autres informations du profil
-        if (empty($updates)) {
-            $_SESSION['error'] = "Aucune mise à jour nécessaire";
+        if (!empty($updates)) {
+            $params[] = $_SESSION['user_id'];
+            $sql = "UPDATE users SET " . implode(", ", $updates) . " WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+
+            $_SESSION['success'] = "Profil mis à jour avec succès";
             header('Location: /profile.php');
             exit;
         }
-
-        $stmt = $pdo->prepare("
-            UPDATE users 
-            SET " . implode(', ', $updates) . "
-            WHERE id = ?
-        ");
-        
-        $stmt->execute(array_merge($params, [$_SESSION['user_id']]));
-
-        $_SESSION['success'] = "Profil mis à jour avec succès";
-        header('Location: /profile.php');
-        exit;
     }
-
-    // Récupérer les informations de l'utilisateur
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $user = $stmt->fetch();
 
     // Récupérer les transactions de l'utilisateur
     $stmt = $pdo->prepare("
@@ -71,10 +73,57 @@ try {
     ");
     $stmt->execute([$_SESSION['user_id']]);
     $transactions = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $_SESSION['error'] = "Erreur: " . $e->getMessage();
+} catch (Exception $e) {
+    $_SESSION['error'] = "Erreur : " . $e->getMessage();
 }
+
+$page_title = "Mon Profil";
+require_once 'includes/header.php';
 ?>
+
+<style>
+/* Empêcher le défilement horizontal sur tout le site */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container-fluid {
+    flex: 1;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+}
+
+/* Assurer que les cartes ne dépassent pas */
+.card {
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Assurer que les tableaux sont responsifs */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Assurer que les images restent dans leur conteneur */
+img {
+    max-width: 100%;
+    height: auto;
+}
+</style>
 
 <div class="container mt-5">
     <div class="row">
@@ -256,4 +305,8 @@ function deleteProfileImage() {
 }
 </script>
 
-<?php require_once 'includes/footer.php'; ?> 
+<?php 
+require_once 'includes/footer.php';
+// Vider et arrêter la mise en mémoire tampon
+ob_end_flush();
+?> <?php require_once 'includes/footer.php'; ?> 

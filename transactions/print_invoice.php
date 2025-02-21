@@ -227,27 +227,27 @@ try {
             <table class="details-table">
                 <tr>
                     <th>Marque</th>
-                    <td><?php echo htmlspecialchars($transaction['brand']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['brand'] ?? 'Non spécifié'); ?></td>
                     <th>Modèle</th>
-                    <td><?php echo htmlspecialchars($transaction['model']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['model'] ?? 'Non spécifié'); ?></td>
                 </tr>
                 <tr>
                     <th>Année</th>
-                    <td><?php echo htmlspecialchars($transaction['year']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['year'] ?? 'Non spécifié'); ?></td>
                     <th>Immatriculation</th>
-                    <td><?php echo htmlspecialchars($transaction['registration_number']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['registration_number'] ?? 'Non spécifié'); ?></td>
                 </tr>
                 <tr>
                     <th>Kilométrage</th>
-                    <td><?php echo number_format($transaction['mileage'], 0, ',', ' '); ?> km</td>
+                    <td><?php echo $transaction['mileage'] ? number_format($transaction['mileage'], 0, ',', ' ') . ' km' : 'Non spécifié'; ?></td>
                     <th>Carburant</th>
-                    <td><?php echo htmlspecialchars($transaction['fuel_type']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['fuel_type'] ?? 'Non spécifié'); ?></td>
                 </tr>
                 <tr>
                     <th>Boîte de vitesse</th>
-                    <td><?php echo htmlspecialchars($transaction['transmission']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['transmission'] ?? 'Non spécifié'); ?></td>
                     <th>Couleur</th>
-                    <td><?php echo htmlspecialchars($transaction['color']); ?></td>
+                    <td><?php echo htmlspecialchars($transaction['color'] ?? 'Non spécifié'); ?></td>
                 </tr>
             </table>
 

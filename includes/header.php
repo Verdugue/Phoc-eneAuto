@@ -18,10 +18,62 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Phocéenne Auto</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="/assets/css/style.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <style>
+        /* Correction du défilement horizontal */
+        body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .navbar {
+            padding: 1rem;
+            background-color:rgb(49, 53, 102); /* Bleu foncé d'origine */
+            box-shadow: 0 2px 4px rgba(0,0,0,.2);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: white;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,.9);
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .active .nav-link {
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Style pour le dropdown */
+        .dropdown-menu {
+            background-color: #1a237e;
+            border: none;
+        }
+
+        .dropdown-item {
+            color: rgba(255,255,255,.9);
+        }
+
+        .dropdown-item:hover {
+            background-color: #283593;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">

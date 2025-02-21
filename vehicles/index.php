@@ -35,26 +35,67 @@ function getSortLink($field, $current_sort_field, $current_sort_order) {
 
 // Récupérer la liste des véhicules avec leurs images principales
 try {
-    // Compter le nombre total de véhicules
-    $total_items = $pdo->query("SELECT COUNT(*) FROM vehicles")->fetchColumn();
-    $total_pages = ceil($total_items / $items_per_page);
+    // Construction de la requête avec les filtres
+    $sql = "SELECT v.*, 
+            s.name as supplier_name,
+            (SELECT vi.file_path 
+             FROM vehicle_images vi 
+             WHERE vi.vehicle_id = v.id 
+             AND vi.is_primary = 1 
+             LIMIT 1) as primary_image
+            FROM vehicles v
+            LEFT JOIN suppliers s ON v.supplier_id = s.id";
 
-    // Récupérer les véhicules pour la page courante
-    $stmt = $pdo->prepare("
-        SELECT v.*, vi.file_path as image_path, s.name as supplier_name 
-        FROM vehicles v
-        LEFT JOIN vehicle_images vi ON v.id = vi.vehicle_id AND vi.is_primary = true
-        LEFT JOIN suppliers s ON v.supplier_id = s.id
-        ORDER BY v.created_at DESC
-        LIMIT :limit OFFSET :offset
-    ");
+    $where_conditions = [];
+    $params = [];
+
+    // Ajouter les conditions de recherche
+    if (!empty($search['brand'])) {
+        $where_conditions[] = "LOWER(v.brand) LIKE ?";
+        $params[] = '%' . strtolower($search['brand']) . '%';
+    }
+    // ... autres conditions de recherche ...
+
+    // Ajouter les conditions WHERE si elles existent
+    if (!empty($where_conditions)) {
+        $sql .= " WHERE " . implode(" AND ", $where_conditions);
+    }
+
+    // Grouper par véhicule pour éviter les doublons
+    $sql .= " GROUP BY v.id";
+
+    // Ajouter le tri
+    $sql .= " ORDER BY v.$sort_field $sort_order";
+
+    // D'abord, compter le nombre total de véhicules
+    $count_sql = "SELECT COUNT(DISTINCT v.id) as total 
+                  FROM vehicles v 
+                  LEFT JOIN suppliers s ON v.supplier_id = s.id";
     
-    $stmt->bindValue(':limit', $items_per_page, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-    $stmt->execute();
+    if (!empty($where_conditions)) {
+        $count_sql .= " WHERE " . implode(" AND ", $where_conditions);
+    }
+    
+    $stmt = $pdo->prepare($count_sql);
+    $stmt->execute($params);
+    $total_items = $stmt->fetch()['total'];
+    
+    // Calculer le nombre total de pages
+    $total_pages = ceil($total_items / $items_per_page);
+    
+    // Ajuster la requête principale pour la pagination
+    $sql .= " LIMIT $items_per_page OFFSET $offset";
+    
+    // Exécuter la requête principale avec pagination
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $vehicles = $stmt->fetchAll();
+
 } catch (PDOException $e) {
-    $error = "Erreur lors de la récupération des véhicules: " . $e->getMessage();
+    $_SESSION['error'] = "Erreur lors de la récupération des véhicules : " . $e->getMessage();
+    $vehicles = [];
+    $total_items = 0;
+    $total_pages = 1;
 }
 ?>
 
@@ -89,8 +130,8 @@ try {
                         <tr onclick="window.location='/vehicles/view.php?id=<?php echo $vehicle['id']; ?>'" 
                             style="cursor: pointer;">
                             <td style="width: 100px;">
-                                <?php if ($vehicle['image_path']): ?>
-                                    <img src="<?php echo htmlspecialchars($vehicle['image_path']); ?>" 
+                                <?php if ($vehicle['primary_image']): ?>
+                                    <img src="<?php echo htmlspecialchars($vehicle['primary_image']); ?>" 
                                          class="img-thumbnail" 
                                          alt="Photo <?php echo htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']); ?>"
                                          style="width: 80px; height: 60px; object-fit: cover;">

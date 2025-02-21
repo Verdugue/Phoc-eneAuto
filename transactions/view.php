@@ -47,9 +47,7 @@ try {
             </a>
             
             <?php if ($transaction['status'] !== 'cancelled'): ?>
-                <a href="edit.php?id=<?php echo $transaction['id']; ?>" class="btn btn-primary">
-                    <i class="fa fa-edit"></i> Modifier
-                </a>
+                
                 
                 <a href="print_invoice.php?id=<?php echo $transaction['id']; ?>" 
                    class="btn btn-info" target="_blank">
@@ -58,12 +56,7 @@ try {
             <?php endif; ?>
         </div>
         
-        <?php if ($transaction['status'] !== 'cancelled'): ?>
-            <button onclick="cancelTransaction(<?php echo $transaction['id']; ?>)" 
-                    class="btn btn-danger">
-                <i class="fa fa-times"></i> Annuler la transaction
-            </button>
-        <?php endif; ?>
+        
     </div>
 
     <div class="row">
