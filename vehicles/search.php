@@ -324,13 +324,13 @@ function getPaginationLink($page) {
                                 <table class="table table-striped table-bordered align-middle">
                                     <thead>
                                         <tr>
-                                            <th>Photo</th>
-                                            <th><a href="<?php echo getSortLink('brand', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Marque</a></th>
-                                            <th><a href="<?php echo getSortLink('model', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Modèle</a></th>
-                                            <th><a href="<?php echo getSortLink('year', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Année</a></th>
-                                            <th><a href="<?php echo getSortLink('price', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Prix</a></th>
-                                            <th><a href="<?php echo getSortLink('mileage', $sort_field, $sort_order); ?>" class="text-light text-decoration-none">Kilométrage</a></th>
-                                            <th>Actions</th>
+                                            <th style="color:black">Photo</th>
+                                            <th><a href="<?php echo getSortLink('brand', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Marque</a></th>
+                                            <th><a href="<?php echo getSortLink('model', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Modèle</a></th>
+                                            <th><a href="<?php echo getSortLink('year', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Année</a></th>
+                                            <th><a href="<?php echo getSortLink('price', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Prix</a></th>
+                                            <th><a href="<?php echo getSortLink('mileage', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Kilométrage</a></th>
+                                            <th style="color:black">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>

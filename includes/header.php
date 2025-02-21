@@ -23,6 +23,8 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/assets/css/style.css" rel="stylesheet">
     
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -35,8 +37,8 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
         }
         
         .navbar {
-            padding: 1rem;
-            background-color:rgb(49, 53, 102); /* Bleu foncé d'origine */
+            padding: 0.5rem 1rem; /* Réduit le padding vertical */
+            background-color: rgb(49, 53, 102);
             box-shadow: 0 2px 4px rgba(0,0,0,.2);
         }
 
@@ -45,38 +47,103 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
             color: white;
         }
 
+        .navbar-nav {
+            gap: 0.5rem; /* Espace entre les items */
+        }
+
+        .nav-item {
+            margin: 0; /* Retire les marges par défaut */
+        }
+
         .nav-link {
+            padding: 0.5rem 0.75rem !important; /* Réduit le padding des liens */
             color: rgba(255,255,255,.9);
             transition: color 0.3s ease;
+            font-size: 0.9rem; /* Réduit légèrement la taille de la police */
         }
 
-        .nav-link:hover {
-            color: white;
+        .navbar-nav .nav-item .nav-link {
+            position: relative;
+            padding-bottom: 0.5rem;
         }
 
-        .active .nav-link {
-            color: white;
-            font-weight: 500;
+        .navbar-nav .nav-item .nav-link.active::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+        }
+
+        .navbar-nav .nav-item .nav-link:hover::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 2px;
+        }
+
+        /* Ajustements pour le dropdown du profil */
+        .navbar .dropdown-menu {
+            margin-top: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .navbar .dropdown-item {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .navbar-nav {
+                padding: 0.5rem 0;
+            }
+            
+            .nav-link {
+                padding: 0.5rem !important;
+            }
         }
 
         /* Style pour le dropdown */
         .dropdown-menu {
-            background-color: #1a237e;
-            border: none;
+            background-color: white;  /* Retour au fond blanc */
+            border: 1px solid rgba(0,0,0,.15);  /* Bordure standard */
         }
 
         .dropdown-item {
-            color: rgba(255,255,255,.9);
+            color: #212529;  /* Couleur de texte standard */
         }
 
         .dropdown-item:hover {
-            background-color: #283593;
-            color: white;
+            background-color: #f8f9fa;  /* Fond gris clair au survol */
+            color: #16181b;  /* Texte plus foncé au survol */
+        }
+
+        /* Styles pour le dashboard */
+        .dashboard-card {
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fa fa-car"></i> Phocéenne Auto

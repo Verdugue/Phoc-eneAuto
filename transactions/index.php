@@ -154,13 +154,13 @@ function getSortLink($field, $current_sort_field, $current_sort_order) {
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>N° Facture</th>
-                            <th>Client</th>
-                            <th>Véhicule</th>
-                            <th>Type</th>
-                            <th>Montant</th>
-                            <th>Paiement</th>
+                            <th style="color:black">Date</th>
+                            <th style="color:black">N° Facture</th>
+                            <th style="color:black">Client</th>
+                            <th style="color:black">Véhicule</th>
+                            <th style="color:black">Type</th>
+                            <th style="color:black">Montant</th>
+                            <th style="color:black">Paiement</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -116,13 +116,13 @@ try {
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Photo</th>
-                        <th>Marque</th>
-                        <th>Modèle</th>
-                        <th>Année</th>
-                        <th>Prix</th>
-                        <th>Kilométrage</th>
-                        <th>Statut</th>
+                        <th style="color:black">Photo</th>
+                        <th style="color:black">Marque</th>
+                        <th style="color:black">Modèle</th>
+                        <th style="color:black">Année</th>
+                        <th style="color:black">Prix</th>
+                        <th style="color:black">Kilométrage</th>
+                        <th style="color:black">Statut</th>
                     </tr>
                 </thead>
                 <tbody>

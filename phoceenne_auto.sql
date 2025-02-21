@@ -415,3 +415,25 @@ INSERT INTO `parking_spots` (`spot_number`, `status`) VALUES
 ('D1', 'available'),
 ('D2', 'available'),
 ('D3', 'available');
+
+-- Ajouter des transactions d'exemple pour fin 2024
+INSERT INTO `transactions` (`customer_id`, `vehicle_id`, `user_id`, `transaction_type`, `transaction_date`, `price`, `payment_method`, `payment_type`, `invoice_number`, `notes`, `status`, `brand`, `model`, `version`, `year`, `color`, `fuel_type`, `transmission`, `mileage`) VALUES
+-- Septembre 2024
+(1, 3, 1, 'sale', '2024-09-05', 45000.00, 'transfer', 'full', 'INV-2024-101', 'Vente BMW Serie 3', 'completed', 'BMW', 'Serie 3', 'M340i', 2024, 'Noir Saphir', 'Essence', 'Automatique', 1500),
+(2, 5, 1, 'sale', '2024-09-15', 38000.00, 'card', 'full', 'INV-2024-102', 'Vente Audi A4', 'completed', 'Audi', 'A4', 'S-Line', 2024, 'Gris Quantum', 'Diesel', 'Automatique', 2000),
+(3, 7, 1, 'sale', '2024-09-25', 42000.00, 'transfer', 'full', 'INV-2024-103', 'Vente Mercedes Classe C', 'completed', 'Mercedes', 'Classe C', 'AMG Line', 2024, 'Blanc Polaire', 'Essence', 'Automatique', 1000),
+
+-- Octobre 2024
+(1, 9, 1, 'sale', '2024-10-08', 55000.00, 'transfer', 'full', 'INV-2024-104', 'Vente BMW X3', 'completed', 'BMW', 'X3', 'M40i', 2024, 'Bleu Phytonic', 'Essence', 'Automatique', 500),
+(2, 11, 1, 'sale', '2024-10-18', 48000.00, 'card', 'full', 'INV-2024-105', 'Vente Audi Q5', 'completed', 'Audi', 'Q5', 'S-Line', 2024, 'Gris Manhattan', 'Diesel', 'Automatique', 1000),
+(3, 13, 1, 'sale', '2024-10-28', 52000.00, 'transfer', 'full', 'INV-2024-106', 'Vente Mercedes GLC', 'completed', 'Mercedes', 'GLC', 'AMG Line', 2024, 'Noir Obsidienne', 'Essence', 'Automatique', 800),
+
+-- Novembre 2024
+(1, 15, 1, 'sale', '2024-11-05', 65000.00, 'transfer', 'full', 'INV-2024-107', 'Vente BMW X5', 'completed', 'BMW', 'X5', 'xDrive40i', 2024, 'Gris Sophisto', 'Essence', 'Automatique', 300),
+(2, 17, 1, 'sale', '2024-11-15', 58000.00, 'card', 'full', 'INV-2024-108', 'Vente Audi Q7', 'completed', 'Audi', 'Q7', 'S-Line', 2024, 'Bleu Navarre', 'Diesel', 'Automatique', 400),
+(3, 19, 1, 'sale', '2024-11-25', 62000.00, 'transfer', 'full', 'INV-2024-109', 'Vente Mercedes GLE', 'completed', 'Mercedes', 'GLE', 'AMG Line', 2024, 'Gris Sélénite', 'Essence', 'Automatique', 600),
+
+-- Décembre 2024
+(1, 21, 1, 'sale', '2024-12-05', 75000.00, 'transfer', 'full', 'INV-2024-110', 'Vente BMW X7', 'completed', 'BMW', 'X7', 'M50i', 2024, 'Noir Carbone', 'Essence', 'Automatique', 200),
+(2, 23, 1, 'sale', '2024-12-15', 68000.00, 'card', 'full', 'INV-2024-111', 'Vente Audi Q8', 'completed', 'Audi', 'Q8', 'S-Line', 2024, 'Blanc Glacier', 'Diesel', 'Automatique', 300),
+(3, 25, 1, 'sale', '2024-12-25', 72000.00, 'transfer', 'full', 'INV-2024-112', 'Vente Mercedes GLS', 'completed', 'Mercedes', 'GLS', 'AMG Line', 2024, 'Gris Ténorite', 'Essence', 'Automatique', 400);

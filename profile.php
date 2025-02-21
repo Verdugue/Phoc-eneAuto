@@ -219,11 +219,11 @@ img {
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th>Date</th>
-                                        <th>Client</th>
-                                        <th>Véhicule</th>
-                                        <th>Type</th>
-                                        <th>Montant</th>
+                                        <th style="color: black;">Date</th>
+                                        <th style="color: black;">Client</th>
+                                        <th style="color: black;">Véhicule</th>
+                                        <th style="color: black;">Type</th>
+                                        <th style="color: black;">Montant</th>
                                     </tr>
                                 </thead>
                                 <tbody>

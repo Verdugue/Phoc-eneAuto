@@ -59,10 +59,10 @@ try {
                 <table class="table table-striped table-bordered table-hover align-middle">
                     <thead>
                         <tr>
-                            <th><a href="<?php echo getSortLink('name', $sort_field, $sort_order); ?>" class="text-white text-decoration-none">Nom</a></th>
-                            <th><a href="<?php echo getSortLink('email', $sort_field, $sort_order); ?>" class="text-white text-decoration-none">Email</a></th>
-                            <th><a href="<?php echo getSortLink('phone', $sort_field, $sort_order); ?>" class="text-white text-decoration-none">Téléphone</a></th>
-                            <th class="text-white">Adresse</th>
+                            <th><a href="<?php echo getSortLink('name', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Nom</a></th>
+                            <th><a href="<?php echo getSortLink('email', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Email</a></th>
+                            <th><a href="<?php echo getSortLink('phone', $sort_field, $sort_order); ?>" class="text-black text-decoration-none">Téléphone</a></th>
+                            <th class="text-black">Adresse</th>
                         </tr>
                     </thead>
                     <tbody>

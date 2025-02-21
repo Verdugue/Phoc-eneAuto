@@ -42,11 +42,11 @@ try {
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Nom</th>
-                        <th>Email</th>
-                        <th>Téléphone</th>
-                        <th>Ville</th>
-                        <th>Statut</th>
+                        <th style="color:black">Nom</th>
+                        <th style="color:black">Email</th>
+                        <th style="color:black">Téléphone</th>
+                        <th style="color:black">Ville</th>
+                        <th style="color:black">Statut</th>
                     </tr>
                 </thead>
                 <tbody>

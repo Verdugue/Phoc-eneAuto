@@ -82,6 +82,7 @@ require_once '../includes/header.php';
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-color), #2980b9);
     border: none;
+    color: black;
 }
 
 .btn-primary:hover {
@@ -242,12 +243,34 @@ require_once '../includes/header.php';
                     <small class="text-muted">La première image sera utilisée comme image principale</small>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <?php echo isset($_GET['id']) ? 'Modifier' : 'Ajouter'; ?> le véhicule
-                </button>
+                <!-- Ajouter les boutons à la fin du formulaire -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <input type="hidden" name="id" value="<?php echo $vehicle['id']; ?>">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                        <a href="/vehicles" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        <?php if (isset($vehicle)): ?>
+                            <button type="button" class="btn btn-danger float-end" onclick="deleteVehicle(<?php echo $vehicle['id']; ?>)">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+function deleteVehicle(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce véhicule ?')) {
+        window.location.href = 'delete.php?id=' + id;
+    }
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?> 

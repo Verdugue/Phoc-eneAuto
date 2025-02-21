@@ -17,27 +17,44 @@ try {
     ");
     $vehicleStats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-    // Ventes des 6 derniers mois
-    $stmt = $pdo->query("
+    // Calculer le CA du mois en cours
+    $stmt = $pdo->prepare("
+        SELECT COALESCE(SUM(price), 0) as monthly_revenue 
+        FROM transactions 
+        WHERE MONTH(transaction_date) = MONTH(CURRENT_DATE) 
+        AND YEAR(transaction_date) = YEAR(CURRENT_DATE)
+        AND transaction_type = 'sale'  -- Compter uniquement les ventes
+    ");
+    $stmt->execute();
+    $monthly_revenue = $stmt->fetch()['monthly_revenue'];
+
+    // Calculer les ventes des 6 derniers mois
+    $stmt = $pdo->prepare("
+        WITH RECURSIVE months AS (
+            SELECT DATE_FORMAT(DATE_SUB(CURRENT_DATE, INTERVAL 5 MONTH), '%Y-%m-01') as month
+            UNION ALL
+            SELECT DATE_ADD(month, INTERVAL 1 MONTH)
+            FROM months
+            WHERE month < DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+        )
         SELECT 
-            m.month_label,
+            DATE_FORMAT(m.month, '%m/%Y') as month_label,
             COALESCE(COUNT(t.id), 0) as count,
             COALESCE(SUM(t.price), 0) as total
-        FROM (
-            SELECT '07/2023' as month_label, '2023-07' as month_sort UNION ALL
-            SELECT '08/2023', '2023-08' UNION ALL
-            SELECT '09/2023', '2023-09' UNION ALL
-            SELECT '10/2023', '2023-10' UNION ALL
-            SELECT '11/2023', '2023-11' UNION ALL
-            SELECT '12/2023', '2023-12'
-        ) m
+        FROM months m
         LEFT JOIN transactions t ON 
-            DATE_FORMAT(t.transaction_date, '%Y-%m') = m.month_sort
+            DATE_FORMAT(t.transaction_date, '%Y-%m') = DATE_FORMAT(m.month, '%Y-%m')
             AND t.transaction_type = 'sale'
-        GROUP BY m.month_label, m.month_sort
-        ORDER BY m.month_sort ASC
+        GROUP BY m.month
+        ORDER BY m.month ASC
     ");
+    $stmt->execute();
     $salesStats = $stmt->fetchAll();
+
+    // Préparer les données pour le graphique
+    $months = array_column($salesStats, 'month_label');
+    $sales = array_column($salesStats, 'total');
+    $counts = array_column($salesStats, 'count');
 
     // Top 5 des marques les plus vendues
     $stmt = $pdo->query("
@@ -50,16 +67,6 @@ try {
         LIMIT 5
     ");
     $topBrands = $stmt->fetchAll();
-
-    // Chiffre d'affaires du mois en cours
-    $stmt = $pdo->query("
-        SELECT COALESCE(SUM(price), 0) as total
-        FROM transactions
-        WHERE transaction_type = 'sale'
-        AND MONTH(transaction_date) = 12  -- Mois de décembre
-        AND YEAR(transaction_date) = 2023  -- Année 2023
-    ");
-    $currentMonthRevenue = $stmt->fetch()['total'];
 
     // Nombre de clients actifs
     $stmt = $pdo->query("
@@ -83,6 +90,9 @@ try {
 
 } catch (PDOException $e) {
     $_SESSION['error'] = "Erreur lors de la récupération des statistiques: " . $e->getMessage();
+    $monthly_revenue = 0;
+    $months = [];
+    $sales = [];
 }
 ?>
 
@@ -99,7 +109,7 @@ try {
         <div class="card bg-success text-white">
             <div class="card-body" style="cursor: pointer" onclick="window.location.href='/transactions/'">
                 <h6 class="card-title">CA du mois</h6>
-                <h2 class="mb-0"><?php echo number_format($currentMonthRevenue, 0, ',', ' '); ?> €</h2>
+                <h2 class="mb-0"><?php echo number_format($monthly_revenue, 2, ',', ' '); ?> €</h2>
             </div>
         </div>
     </div>
@@ -169,12 +179,12 @@ try {
                         <table class="table table-striped table-bordered align-middle">
                             <thead>
                                 <tr>
-                                    <th class="text-light">Date</th>
-                                    <th class="text-light">Client</th>
-                                    <th class="text-light">Véhicule</th>
-                                    <th class="text-light">Version</th>
-                                    <th class="text-light">Location</th>
-                                    <th class="text-light">Montant</th>
+                                    <th class="text-black">Date</th>
+                                    <th class="text-black">Client</th>
+                                    <th class="text-black">Véhicule</th>
+                                    <th class="text-black">Version</th>
+                                    <th class="text-black">Location</th>
+                                    <th class="text-black">Montant</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -208,21 +218,16 @@ const salesCtx = document.getElementById('salesChart').getContext('2d');
 new Chart(salesCtx, {
     type: 'line',
     data: {
-        labels: <?php echo json_encode(array_column($salesStats, 'month_label')); ?>,
+        labels: <?php echo json_encode($months); ?>,
         datasets: [
             {
                 label: 'Chiffre d\'affaires (€)',
-                data: <?php echo json_encode(array_column($salesStats, 'total')); ?>,
-                borderColor: 'rgb(75, 192, 192)',
+                data: <?php echo json_encode($sales); ?>,
+                borderColor: 'rgb(49, 53, 102)',
+                backgroundColor: 'rgba(49, 53, 102, 0.1)',
                 yAxisID: 'y',
-                tension: 0.1
-            },
-            {
-                label: 'Nombre de ventes',
-                data: <?php echo json_encode(array_column($salesStats, 'count')); ?>,
-                borderColor: 'rgb(255, 99, 132)',
-                yAxisID: 'y1',
-                tension: 0.1
+                tension: 0.1,
+                fill: true
             }
         ]
     },
@@ -249,18 +254,6 @@ new Chart(salesCtx, {
                             maximumFractionDigits: 0
                         }).format(value);
                     }
-                }
-            },
-            y1: {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                title: {
-                    display: true,
-                    text: 'Nombre de ventes'
-                },
-                grid: {
-                    drawOnChartArea: false,
                 }
             }
         }
